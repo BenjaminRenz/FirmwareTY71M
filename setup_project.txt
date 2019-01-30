@@ -1,3 +1,1 @@
-Download arm gnu c compiler from:
-https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads
-and extract
+Just open CodeBlocks17.12/codeblocks.exe and open the project file firmware_c/ty71m.cbp

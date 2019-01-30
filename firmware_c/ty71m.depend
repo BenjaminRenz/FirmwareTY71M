@@ -1,0 +1,68 @@
+# depslib dependency file v1.0
+1548876493 source:r:\studium\firmwarety71m\firmware_c\main.c
+	<NUC122.h>
+	<semihosting.h>
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\nuc122.h
+	"core_cm0.h"
+	"system_NUC122.h"
+	"SYS.h"
+	"FMC.h"
+	"GPIO.h"
+	"I2C.h"
+	"PWM.h"
+	"SPI.h"
+	"TIMER.h"
+	"WDT.h"
+	"UART.h"
+	"USBD.h"
+	"PS2.h"
+	"CLK.h"
+	"RTC.h"
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\core_cm0.h
+	<stdint.h>
+	<core_cmInstr.h>
+	<core_cmFunc.h>
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\core_cminstr.h
+	<cmsis_iar.h>
+	<cmsis_ccs.h>
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\core_cmfunc.h
+	<cmsis_iar.h>
+	<cmsis_ccs.h>
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\system_nuc122.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\sys.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\fmc.h
+	"NUC122.h"
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\gpio.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\i2c.h
+	"NUC122.h"
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\pwm.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\spi.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\timer.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\wdt.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\uart.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\usbd.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\ps2.h
+	"NUC122.h"
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\clk.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\rtc.h
+
+1542235996 r:\studium\firmwarety71m\firmware_c\include\semihosting.h
+
