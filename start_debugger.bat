@@ -1,0 +1,1 @@
+.\OpenOCD-20181130\bin\openocd.exe -f .\OpenOCD-20181130\share\openocd\scripts\interface\stlink.cfg -f .\OpenOCD-20181130\share\openocd\scripts\target\numicro.cfg

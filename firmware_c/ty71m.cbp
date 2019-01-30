@@ -17,7 +17,6 @@
 				<Option projectCompilerOptionsRelation="0" />
 				<Option projectLinkerOptionsRelation="-1" />
 				<Option projectIncludeDirsRelation="0" />
-				<Option projectResourceIncludeDirsRelation="-1" />
 				<Option projectLibDirsRelation="-1" />
 				<Linker>
 					<Add option="--specs=nosys.specs" />
@@ -40,7 +39,11 @@
 		<Extensions>
 			<code_completion />
 			<envvars />
-			<debugger />
+			<debugger>
+				<remote_debugging>
+					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds_before="reset halt" />
+				</remote_debugging>
+			</debugger>
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
