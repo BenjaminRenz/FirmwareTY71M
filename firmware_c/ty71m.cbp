@@ -3,16 +3,40 @@
 	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="ty71m" />
+		<Option platforms="Windows;" />
 		<Option pch_mode="2" />
-		<Option compiler="null" />
+		<Option compiler="arm-elf-gcc" />
 		<Build>
 			<Target title="Release">
+				<Option platforms="Windows;" />
 				<Option output="bin/Release/ty71m" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
 				<Option object_output="obj/Release/" />
-				<Option type="1" />
-				<Option compiler="null" />
+				<Option type="5" />
+				<Option compiler="arm-elf-gcc" />
+				<Option projectCompilerOptionsRelation="0" />
+				<Option projectLinkerOptionsRelation="-1" />
+				<Option projectIncludeDirsRelation="0" />
+				<Option projectResourceIncludeDirsRelation="-1" />
+				<Option projectLibDirsRelation="-1" />
+				<Linker>
+					<Add option="--specs=nosys.specs" />
+					<Add option="-T ./gcc_arm.ld" />
+				</Linker>
 			</Target>
 		</Build>
+		<Compiler>
+			<Add option="-g" />
+			<Add directory="include" />
+			<Add directory="src" />
+		</Compiler>
+		<Linker>
+			<Add option="--specs=nosys.specs" />
+			<Add option="-T ./gcc_arm.ld" />
+		</Linker>
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />
