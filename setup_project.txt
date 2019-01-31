@@ -1,4 +1,0 @@
-Open CodeBlocks17.12/codeblocks.exe and open the project file firmware_c/ty71m.cbp
-Compile the code
-Run start_debugger.bat
-Start debugging in CodeBlocks

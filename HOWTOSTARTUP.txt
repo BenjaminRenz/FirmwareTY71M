@@ -1,0 +1,8 @@
+Run START_codeblocks_portable.bat, which will launch CodeBlocks in a portable manner
+              and set the user-data-settings to the already preconfigured compilers.
+open the project file located at firmware_c/ty71m.cbp
+make your edits to the code
+hit compile or recompile
+Run START_debugger.bat
+Start debugging in CodeBlocks
+TODO make flash procedure automatic
