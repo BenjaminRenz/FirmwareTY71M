@@ -74,9 +74,6 @@
   <Option name="Optimize fully (for speed)" option="-O3" category="Optimization" checkAgainst="-g -ggdb" checkMessage="You have debugging symbols enabled. This is Not A Good Thing(tm) when optimizing..." supersedes="-O -O1 -O2 -Os"/>
   <Option name="Optimize generated code (for size)" option="-Os" category="Optimization" checkAgainst="-g -ggdb" checkMessage="You have debugging symbols enabled. This is Not A Good Thing(tm) when optimizing..." supersedes="-O -O1 -O2 -O3"/>
   <Option name="Link-Time-Optimization" option="-flto" category="Optimization" additionalLibs="-flto" checkAgainst="-g -ggdb" checkMessage="Combining -flto with -g is currently experimental and expected to produce wrong results."/>
-  <Option name="" category="Optimization" additionalLibs="-O1" supersedes="-O -O2 -O3 -Os"/>
-  <Option name="" category="Optimization" additionalLibs="-O2" supersedes="-O -O1 -O3 -Os"/>
-  <Option name="" category="Optimization" additionalLibs="-O3" supersedes="-O -O1 -O2 -Os"/>
   <Option name="Expensive optimizations" option="-fexpensive-optimizations" category="Optimization" checkAgainst="-g -ggdb" checkMessage="You have debugging symbols enabled. This is Not A Good Thing(tm) when optimizing..."/>
   <Option name="Don't keep the frame pointer in a register for functions that don't need one" option="-fomit-frame-pointer" category="Optimization" checkAgainst="-g -ggdb" checkMessage="You have debugging symbols enabled. This is Not A Good Thing(tm) when optimizing..."/>
   <Option name="Generate stack frame even if unnecessary" option="-mapcs-frame" category="ARM CPU architecture specific" supersedes="-mno-apcs-frame"/>
@@ -180,6 +177,7 @@
   <Option name="ARM1026ej-s processor" option="-mcpu=arm1026ej-s" category="ARM CPU architecture derivatives" exclusive="true"/>
   <Option name="ARM10e processor" option="-mcpu=arm10e" category="ARM CPU architecture derivatives" exclusive="true"/>
   <Option name="ARM1020e processor" option="-mcpu=arm1020e" category="ARM CPU architecture derivatives" exclusive="true"/>
+  <Option name="cortex-m0 processor" option="-mcpu=cortex-m0" category="ARM CPU architecture derivatives" exclusive="true"/>
   <Option name="ARM1022e processor" option="-mcpu=arm1022e" category="ARM CPU architecture derivatives" exclusive="true"/>
   <Option name="ARM1136j-s processor" option="-mcpu=arm1136j-s" category="ARM CPU architecture derivatives" exclusive="true"/>
   <Option name="ARM1136jf-s processor" option="-mcpu=arm1136jf-s" category="ARM CPU architecture derivatives" exclusive="true"/>
