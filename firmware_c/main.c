@@ -1,12 +1,11 @@
 #include <NUC122.h>
 #include <semihosting.h>
 //microcontroller is a NUC123LD4AN with 68kb flash and 20kb sram
-//goto pdf reference: http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.03.pdf
+//goto pdf reference: http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 
 //Note USB supports up to 8 endpoints
 
 void init(){
-    SYS_UnlockReg();//get write access to clock registers
     //section: Clock configuration
     /*
         External Quartz (HXT) is 4MHz
@@ -32,39 +31,44 @@ void init(){
 
         Dividers
         USB: /3 by CLKDIV     -> 48MHz
-        HCLK_N: /2 by CLKSEL0 -> 72MHz
+        HCLK_N: /2 by CLKDIV  -> 72MHz
+            used to be CLKSEL0_HCLS_S_PLL_DIV2 but conflicting definitions in the manual/library
 
         CLOCK INIT PROCESS:
         write all other registers, *1 to enable HXT, wait for stable clock, *2 to switch to HXT, *3 to disable HIRC
 
         This leads to register config:
-        PWRCON *1:   0x00000035 //Instant powerdown with PWR_DOWN_EN, Interrupts enables, wait for stable clock, HIRC on, HXT on
-        PWRCON *3:    0x00000031  //Instant powerdown with PWR_DOWN_EN, Interrupts enables, wait for stable clock, HXT on
+        PWRCON *1:              0x00000035 //Instant powerdown with PWR_DOWN_EN, Interrupts enables, wait for stable clock, HIRC on, HXT on
+        PWRCON *3:              0x00000031  //Instant powerdown with PWR_DOWN_EN, Interrupts enables, wait for stable clock, HXT on
         AHBCLK:                 0x00000004 //ISP
         APBCLK:                 0x08010200 //USBD, UART0, I2C1
-        CLKSEL0 *2:        0x00000001 //STCLK_S=HXT/1,HCLK_S=PLL/2 !*only write to after source and destination clock is stable and after
+        CLKSEL0 *2:             0x00000001 //STCLK_S=HXT/1,HCLK_S=PLL/2 !*only write to after source and destination clock is stable and after
         CLKSEL1:                0x5122227A //all periphial clocks on HCLK
         CLKSEL2:                0x0002000A //all periphial clocks on HCLK
         CLKDIV:                 0x00000020 //USB/3
-        PLLCON:                 0x00000048 //Setup for 144MHz see above
+        PLLCON:                 0x00000046 //Setup for 144MHz see above
         FRQDIV:                 0x00000000 //Frequency divider and clock output pin disabled
         APBDIV:                 0x00000000 //default, no divider
     */
-    CLK_PWRCON_XTL12M_EN_Msk
-    CLK_EnableXtalRC(CLK_PWRCON_XTL12M_EN_Msk); //enable clock input by external crystal
-
-    CLK_EnablePLL(CLK_P);
-    CLK_WaitClockReady(CLK_CLKSTATUS_XTL12M_STB_Msk); //and wait for it to become ready
-    CLK_SetCoreClock(4000000);
-
-    //subsection to enable clocks for modules
-    CLK_EnableModuleClock(UART0_MODULE)     //Enable UART0 clock for bluetooth
-    CLK_EnableModuleClock(UART0_MODULE);    //enable USB clock
-    CLK_EnableModuleClock(I2C1_MODULE);     //enable i2c1 clock for eeprom
-                                            //TODO enable Timer or pwm?
-
-    //subsection: clock source for modules
-    CLK_SetModuleClock(UART0_MODULE,CLK_CLKSEL)
+    //Unlock configuration registers
+    SYS_UnlockReg();
+    //Configure clock for periphials, pll, ...
+    CLK_T ClockContrMemoryMap=(CLK_T*) CLK_BASE;
+    ClockContrMemoryMap->AHBCLK=CLK_AHBCLK_ISP_EN_Msk;
+    ClockContrMemoryMap->APBCLK=CLK_APBCLK_USBD_EN_Msk|CLK_APBCLK_I2C1_EN_Msk|CLK_APBCLK_UART0_EN_Msk;
+    ClockContrMemoryMap->CLKDIV=CLK_CLKDIV_USB(3)|CLK_CLKDIV_HCLK(2);
+    ClockContrMemoryMap->PLLCON=70; //FB_DV=70, OUT_DV=0, IN_DV=0, PLL_SRC=HXT
+    ClockContrMemoryMap->CLKSEL1=CLK_CLKSEL1_WDT_S_HCLK_DIV2048|CLK_CLKSEL1_UART_S_PLL;
+    ClockContrMemoryMap->RESERVE0=//CLK_CLKSEL2
+    //Enable external HXT
+    ClockContrMemoryMap->PWRCON=CLK_PWRCON_XTL12M_EN_Msk|CLK_PWRCON_OSC22M_EN_Msk|CLK_PWRCON_PD_WU_DLY_Msk|CLK_PWRCON_PD_WU_INT_EN_Msk;
+    //Wait for stability of external and internal oscillator
+    while((~ClockContrMemoryMap->CLKSTATUS)&(CLK_CLKSTATUS_OSC22M_STB_Msk|CLK_CLKSTATUS_XTL12M_STB_Msk|CLK_CLKSTATUS_PLL_STB_Msk))==0){}
+    //Set clock to external
+    ClockContrMemoryMap->CLKSEL0=CLK_CLKSEL0_STCLK_S_HCLK_DIV2|CLK_CLKSEL0_HCLK_S_PLL //Because of conflicting documentation of CLK_CLKSEL0_HCLK_S_LXT I will use CLK_CLKSEL_HCLK_S_PLL, reference says this is PLL/2 but programming library says otherwise
+    //DODO use divider to half HCLK
+    //Relock configuration registers
+    SYS_LockReg();
 }
 int main(void){
 
