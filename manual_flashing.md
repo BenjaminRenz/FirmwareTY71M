@@ -40,26 +40,33 @@
     Take a look at the bit at 0x00000002 or (1<<1), so the second leftmost bit. It if is 0 your flash is security locked and can't be read by the isp.
     It it is 1 please let me know, you should be able to backup your firmware, do that first before proceeding any further.
 
-8) WARNING! will wipe the existing firmware on your chip WARNING! As of now there is no way going back
+8) Compile the firmware by opening CodeBlocks according to HOWTOSTARTUP.md and compile with !!!Important!!! "Just Compile" configuration selected
+		You should have a new firmware.bin file in the firmware_c/out folder
+		
+9) WARNING! will wipe the existing firmware on your chip WARNING! As of now there is no way going back
+		Do this for unlocking the read/write protection if present
   numicro chip_erase
-    numicro chip_erase complete
+    returns: numicro chip_erase complete
     All the data on the chip will be gone,  numicro read_isp 0x00300000 will return 0xffffffff
-
-9a) prepare for flashing
+		
+10) prepare for flashing
   init
   reset init
      
-9b) flash image
+11) flash image
   flash write_image ./firmware_c/out/firmware.bin
 
-10) verfy flash
+12) verfy flash
   flash verify_bank 0 ./firmware_c/out/firmware.bin
   
-11)
+13)
   reset run
 
 
-Interesting commands:
+	
+	
+EXTRA
+	Interesting commands of openocd:
     flash info 0 (displays info of flash bank 0) (incorrect lock info!)
     flash banks (displays all four flash banks and their size)
     mdw 0x50000100 (reads memory from address 0x50000100) (does not work for 0x00300000)
