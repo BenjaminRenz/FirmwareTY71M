@@ -61,7 +61,7 @@ void SystemInit(){
     ClockContrMemoryMap->CLKDIV=CLK_CLKDIV_USB(3)|CLK_CLKDIV_HCLK(2);
     ClockContrMemoryMap->PLLCON=70; //FB_DV=70, OUT_DV=0, IN_DV=0, PLL_SRC=HXT
     ClockContrMemoryMap->CLKSEL1=CLK_CLKSEL1_WDT_S_HCLK_DIV2048|CLK_CLKSEL1_UART_S_PLL;
-    ClockContrMemoryMap->CLKSEL2=//CLK_CLKSEL2
+    //ClockContrMemoryMap->CLKSEL2=//CLK_CLKSEL2
     //Enable external HXT
     ClockContrMemoryMap->PWRCON=CLK_PWRCON_XTL12M_EN_Msk|CLK_PWRCON_OSC22M_EN_Msk|CLK_PWRCON_PD_WU_DLY_Msk|CLK_PWRCON_PD_WU_INT_EN_Msk;
     //Wait for stability of external and internal oscillator

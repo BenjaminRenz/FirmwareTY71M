@@ -6,24 +6,25 @@ toolchainpath=$(projectpath)\..\gcc-arm\bin
 objfilepath=$(projectpath)\obj
 outputpath=$(projectpath)\out
 
-as:=arm-none-eabi-as.exe
 cc:=arm-none-eabi-gcc.exe
-ar:=arm-none-eabi-ar.exe
-ld:=arm-none-eabi-ld.exe
+objcp:=arm-none-eabi-objcopy.exe
 
 startupFile:=.\startup_NUC122.S
 
 InFiles:=main.c $(startupFile)
-OutFiles:=.\out\firmware.elf
+elfFile:=.\out\firmware.elf
 ccFlags:=-g --specs=nosys.specs -Wall -mcpu=cortex-m0 -mthumb -mfloat-abi=soft
 ldFlags:=-T.\gcc_arm.ld
 
-Release: 
+firmwareOUT:=.\out\firmware.bin
+
+createBin: 
 	@echo "Started compilation of firmware"
-	$(cc) -v $(InFiles) $(ldFlags) -I.\inc  -o $(OutFiles) $(ccFlags)
+	$(cc) -v $(InFiles) $(ldFlags) -I.\inc  -o $(elfFile) $(ccFlags)
+	@echo "Finished compilation"
+	@echo "ObjCopy"
+	$(objcp) -O binary $(elfFile) $(firmwareOUT)
+	del /F /Q  $(elfFile)
 clean:
-	@echo "Path %cd%"
-	@echo "Cleaning objectfiles"
-	del /F /Q $(objfilepath)\*.*
-	@echo "Cleaning outputfiles"
-	del /F /Q $(outputpath)\*.*
+	@echo "Delete old bin file"
+	del /F /Q $(firmwareOUT)

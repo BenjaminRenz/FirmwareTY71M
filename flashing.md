@@ -45,27 +45,18 @@
     numicro chip_erase complete
     All the data on the chip will be gone,  numicro read_isp 0x00300000 will return 0xffffffff
 
-    
-     //From here on still not tested
 9a) prepare for flashing
   init
   reset init
      
 9b) flash image
-  flash write_image ./firmware_c/bin/ty71m.elf
+  flash write_image ./firmware_c/out/firmware.bin
 
 10) verfy flash
-  flash verify_bank 0 ./firmware_c/bin/ty71m.elf
+  flash verify_bank 0 ./firmware_c/out/firmware.bin
   
 11)
   reset run
-
-?)
-  program firmware_c/bin/ty71m.elf verfy reset run
-
-TODO!
-upload the custom firmware
-
 
 
 Interesting commands:
