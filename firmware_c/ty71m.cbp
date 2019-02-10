@@ -13,27 +13,27 @@
 				<Option object_output="out" />
 				<Option type="5" />
 				<Option compiler="arm-elf-gcc" />
-				<Option projectCompilerOptionsRelation="0" />
-				<Option projectLinkerOptionsRelation="-1" />
+				<Option projectCompilerOptionsRelation="1" />
+				<Option projectLinkerOptionsRelation="0" />
 				<Option projectIncludeDirsRelation="0" />
 				<Option projectLibDirsRelation="-1" />
-				<Linker>
-					<Add option="--specs=nosys.specs" />
-					<Add option="-T ./gcc_arm.ld" />
-				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-mcpu=cortex-m0" />
 			<Add option="-g" />
 			<Add directory="inc" />
 			<Add directory="src" />
 		</Compiler>
-		<Linker>
-			<Add option="--specs=nosys.specs" />
-			<Add option="-T ./gcc_arm.ld" />
-		</Linker>
+		<Unit filename="custom.h" />
+		<Unit filename="gcc_arm.ld">
+			<Option link="1" />
+		</Unit>
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="startup_NUC122.S">
+			<Option compilerVar="AS" />
 		</Unit>
 		<Extensions>
 			<code_completion />

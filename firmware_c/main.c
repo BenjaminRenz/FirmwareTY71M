@@ -1,5 +1,6 @@
-#include <NUC122.h>
-#include <semihosting.h>
+#include "custom.h"
+//#include <NUC122.h>
+//#include <semihosting.h>
 //microcontroller is a NUC123LD4AN with 68kb flash and 20kb sram
 //goto pdf reference: http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 
@@ -53,19 +54,19 @@ void init(){
     //Unlock configuration registers
     SYS_UnlockReg();
     //Configure clock for periphials, pll, ...
-    CLK_T ClockContrMemoryMap=(CLK_T*) CLK_BASE;
-    ClockContrMemoryMap->AHBCLK=CLK_AHBCLK_ISP_EN_Msk;
-    ClockContrMemoryMap->APBCLK=CLK_APBCLK_USBD_EN_Msk|CLK_APBCLK_I2C1_EN_Msk|CLK_APBCLK_UART0_EN_Msk;
+    CLK_T* ClockContrMemoryMap=(CLK_T*) CLK_BASE;
+    ClockContrMemoryMap->AHBCLK=CLK_AHBCLK_ISP_Msk;
+    ClockContrMemoryMap->APBCLK=CLK_APBCLK_USBD_Msk|CLK_APBCLK_I2C1_Msk|CLK_APBCLK_UART0_Msk;
     ClockContrMemoryMap->CLKDIV=CLK_CLKDIV_USB(3)|CLK_CLKDIV_HCLK(2);
     ClockContrMemoryMap->PLLCON=70; //FB_DV=70, OUT_DV=0, IN_DV=0, PLL_SRC=HXT
     ClockContrMemoryMap->CLKSEL1=CLK_CLKSEL1_WDT_S_HCLK_DIV2048|CLK_CLKSEL1_UART_S_PLL;
-    ClockContrMemoryMap->RESERVE0=//CLK_CLKSEL2
+    ClockContrMemoryMap->CLKSEL2=//CLK_CLKSEL2
     //Enable external HXT
     ClockContrMemoryMap->PWRCON=CLK_PWRCON_XTL12M_EN_Msk|CLK_PWRCON_OSC22M_EN_Msk|CLK_PWRCON_PD_WU_DLY_Msk|CLK_PWRCON_PD_WU_INT_EN_Msk;
     //Wait for stability of external and internal oscillator
-    while((~ClockContrMemoryMap->CLKSTATUS)&(CLK_CLKSTATUS_OSC22M_STB_Msk|CLK_CLKSTATUS_XTL12M_STB_Msk|CLK_CLKSTATUS_PLL_STB_Msk))==0){}
+    while(((~ClockContrMemoryMap->CLKSTATUS)&(CLK_CLKSTATUS_OSC22M_STB_Msk|CLK_CLKSTATUS_XTL12M_STB_Msk|CLK_CLKSTATUS_PLL_STB_Msk))==0){}
     //Set clock to external
-    ClockContrMemoryMap->CLKSEL0=CLK_CLKSEL0_STCLK_S_HCLK_DIV2|CLK_CLKSEL0_HCLK_S_PLL //Because of conflicting documentation of CLK_CLKSEL0_HCLK_S_LXT I will use CLK_CLKSEL_HCLK_S_PLL, reference says this is PLL/2 but programming library says otherwise
+    ClockContrMemoryMap->CLKSEL0=CLK_CLKSEL0_STCLK_S_HCLK_DIV2|CLK_CLKSEL0_HCLK_S_PLL; //Because of conflicting documentation of CLK_CLKSEL0_HCLK_S_LXT I will use CLK_CLKSEL_HCLK_S_PLL, reference says this is PLL/2 but programming library says otherwise
     //DODO use divider to half HCLK
     //Relock configuration registers
     SYS_LockReg();

@@ -1,6 +1,6 @@
 # depslib dependency file v1.0
-1548941263 source:r:\studium\firmwarety71m\firmware_c\main.c
-	<NUC122.h>
+1549666421 source:r:\studium\firmwarety71m\firmware_c\main.c
+	"custom.h"
 	<semihosting.h>
 
 1542235996 r:\studium\firmwarety71m\firmware_c\include\nuc122.h
@@ -65,4 +65,24 @@
 1542235996 r:\studium\firmwarety71m\firmware_c\include\rtc.h
 
 1542235996 r:\studium\firmwarety71m\firmware_c\include\semihosting.h
+
+1549674396 r:\studium\firmwarety71m\firmware_c\custom.h
+	<stdint.h>
+	"core_cm0.h"
+	"core_cmInstr.h"
+
+1542235996 r:\studium\firmwarety71m\firmware_c\inc\core_cm0.h
+	<stdint.h>
+	<core_cmInstr.h>
+	<core_cmFunc.h>
+
+1542235996 r:\studium\firmwarety71m\firmware_c\inc\core_cminstr.h
+	<cmsis_iar.h>
+	<cmsis_ccs.h>
+
+1542235996 r:\studium\firmwarety71m\firmware_c\inc\core_cmfunc.h
+	<cmsis_iar.h>
+	<cmsis_ccs.h>
+
+1542235996 r:\studium\firmwarety71m\firmware_c\inc\semihosting.h
 

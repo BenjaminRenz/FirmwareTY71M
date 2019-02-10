@@ -1,7 +1,7 @@
 //Original Code from https://github.com/futureshocked/EEEPROM
 //TODO Still need modification
 //TODO #include <I2C.h>
-#include <EEEPROM.h>
+//#include <EEEPROM.h>
 
 
 void i2c_eeprom_write_byte( int deviceaddress, unsigned int eeaddress, byte data ){
