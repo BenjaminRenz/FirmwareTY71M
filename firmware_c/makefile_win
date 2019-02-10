@@ -11,25 +11,16 @@ cc:=arm-none-eabi-gcc.exe
 ar:=arm-none-eabi-ar.exe
 ld:=arm-none-eabi-ld.exe
 
-asInFiles:=.\startup_NUC122.S
-asOutFiles:=.\obj\startup_NUC122.O
+startupFile:=.\startup_NUC122.S
 
-ccInFiles:=main.c
-ccOutFiles:=.\out\compiled.o
+InFiles:=main.c $(startupFile)
+OutFiles:=.\out\firmware.elf
 ccFlags:=-g --specs=nosys.specs -Wall -mcpu=cortex-m0 -mthumb -mfloat-abi=soft
-
-ldInFiles:=$(ccOutFiles) $(asOutFiles)
-ldOutFiles:=.\obj\firmware.elf
 ldFlags:=-T.\gcc_arm.ld
-ldLibDirs:=-L.\..\gcc-arm\arm-none-eabi\lib -L.\..\gcc-arm\lib\gcc\arm-none-eabi\8.2.1
 
 Release: 
-	@echo "Started assembling of startup file"
-	$(as) -o$(asOutFiles) $(asInFiles) -mcpu=cortex-m0
 	@echo "Started compilation of firmware"
-	$(cc) -c -v $(ccInFiles) -I.\inc  -o $(ccOutFiles) $(ccFlags)
-	@echo "Linking the object files from the previous steps"
-	$(ld) $(ldFlags) $(ldInFiles) -o$(ldOutFiles) $(ldLibDirs)
+	$(cc) -v $(InFiles) $(ldFlags) -I.\inc  -o $(OutFiles) $(ccFlags)
 clean:
 	@echo "Path %cd%"
 	@echo "Cleaning objectfiles"

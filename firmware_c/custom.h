@@ -30,7 +30,7 @@
 #define CLK_CLKDIV_HCLK(c)  ((c)-1)
 
 
-void __inline SYS_UnlockReg(void){
+static __inline void  SYS_UnlockReg(void){
     while((*((uint32_t*)REGWRPROT)) != 0x00000001){ //Check if unlocked
         *((uint32_t*)REGWRPROT) = 0x59;           //Write unlock sequence
         *((uint32_t*)REGWRPROT) = 0x16;

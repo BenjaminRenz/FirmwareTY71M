@@ -1,3 +1,4 @@
+#define __NO_SYSTEM_INIT
 #include "custom.h"
 //#include <NUC122.h>
 //#include <semihosting.h>
@@ -6,7 +7,7 @@
 
 //Note USB supports up to 8 endpoints
 
-void init(){
+void SystemInit(){
     //section: Clock configuration
     /*
         External Quartz (HXT) is 4MHz
