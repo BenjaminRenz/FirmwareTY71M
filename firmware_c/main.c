@@ -71,6 +71,24 @@ void SystemInit(){
     //DODO use divider to half HCLK
     //Relock configuration registers
     SYS_LockReg();
+
+    //PIN CONFIGURATION
+
+    //Special Pin config
+    //I2C1 - SCL PA11, SDA PA10
+    //UART0 - RXD PC4, TXD PC5
+    GPA_MFP=0x00000C00;
+    GPB_MFP=0x00000002;
+    ALT_MFP=0x60000000;
+
+    //GPIO Config
+    //Switch INPUT  PB8, PF2, PD0-PD5, PA13
+    //Switch OUTPUT
+    //Battery/USB Voltage detection? PB14/INT0 and PA12
+
+
+
+
 }
 int main(void){
 
