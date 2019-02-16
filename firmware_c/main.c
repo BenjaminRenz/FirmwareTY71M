@@ -1,5 +1,7 @@
 #define __NO_SYSTEM_INIT
-#include "custom.h"
+#include "custom.h" //NUC123LD4AN hardware definitions
+
+#include "backlight.h" //fuctions for setting the rgb led backlight
 //#include <NUC122.h>
 //#include <semihosting.h>
 //microcontroller is a NUC123LD4AN with 68kb flash and 20kb sram
