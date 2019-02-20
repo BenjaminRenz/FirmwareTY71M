@@ -1,10 +1,14 @@
+
+#ifndef CUSTOM_H_INCLUDED
+#define CUSTOM_H_INCLUDED
+
 #include <stdint.h>
 //variable names are derived from the manual at http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 
 //Clock configuration defines
-#define AHB_BASE ((uint32_t)0x50000000)
-#define CLK_BASE (AHB_BASE+0x00200)
-#define REGWRPROT (AHB_BASE+0x100)
+#define AHB_BASE ((uint32_t*)0x50000000)
+#define CLK_BASE (*(AHB_BASE+0x00200))
+#define REGWRPROT (*(AHB_BASE+0x100))
 
 #define CLK_AHBCLK_ISP_Msk              0x00000004
 #define CLK_APBCLK_USBD_Msk             0x08000000
@@ -29,17 +33,38 @@
 #define CLK_CLKDIV_USB(c)  (((c)-1) << 4)
 #define CLK_CLKDIV_HCLK(c)  ((c)-1)
 
+//GPIO defines
+#define GP_BA ((uint32_t*)0x50004000) //memory base address of the GPIO controller
+
+#define GPIOA_PMD (*(GP_BA+0x000)) //pin mode (input/output/tristate/bidirectional) configuration
+#define GPIOB_PMD (*(GP_BA+0x040))
+#define GPIOC_PMD (*(GP_BA+0x080))
+#define GPIOD_PMD (*(GP_BA+0x0C0))
+#define GPIOF_PMD (*(GP_BA+0x140))
+
+
+#define GPIOA12_DOUT (*(GP_BA+0x230)) //high backlight on, low backlight off
+#define GPIOB10_DOUT (*(GP_BA+0x268)) //clock to shift through the rgister
+#define GPIOC0_DOUT  (*(GP_BA+0x280))//pull low then high to display internal shifted values on the output pins
+#define GPIOC1_DOUT  (*(GP_BA+0x284))//connected to data in pin on first shift register
+
+//System Manager defines
+#define GCR_BA ((uint32_t*)0x50000000)
+#define GPA_MFP (*(GCR_BA+0x30))  //GPIO A Input Type Register
+#define GPB_MFP (*(GCR_BA+0x34))  //GPIO B Input Type Register
+#define ALT_MFP (*(GCR_BA+0x50))  //GPIO Alternative Functions
+#define ALT_MFP1 (*(GCR_BA+0x54)) //GPIO Alternative Functions
 
 static __inline void  SYS_UnlockReg(void){
-    while((*((uint32_t*)REGWRPROT)) != 0x00000001){ //Check if unlocked
-        *((uint32_t*)REGWRPROT) = 0x59;           //Write unlock sequence
-        *((uint32_t*)REGWRPROT) = 0x16;
-        *((uint32_t*)REGWRPROT) = 0x88;
+    while(REGWRPROT != 0x00000001){ //Check if unlocked
+        REGWRPROT = 0x59;           //Write unlock sequence
+        REGWRPROT = 0x16;
+        REGWRPROT = 0x88;
     }
 }
 
 static __inline void SYS_LockReg(void){ //Relock Register by writing arbitrary data to it
-    *((uint32_t*)REGWRPROT) = 0;
+    REGWRPROT = 0;
 }
 
 typedef struct{
@@ -89,3 +114,5 @@ typedef enum IRQn{
 //Include of standard arm headers
 #include "core_cm0.h"     //Core periphial library header
 #include "core_cmInstr.h" //Assembler Instructions
+
+#endif // CUSTOM_H_INCLUDED

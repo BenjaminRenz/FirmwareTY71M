@@ -62,13 +62,13 @@
 			<Add directory="inc" />
 			<Add directory="src" />
 		</Compiler>
-		<Unit filename="custom.h">
-			<Option target="Just Compile" />
-		</Unit>
 		<Unit filename="gcc_arm.ld">
 			<Option link="1" />
 			<Option target="Just Compile" />
 		</Unit>
+		<Unit filename="inc/backlight.h" />
+		<Unit filename="inc/custom.h" />
+		<Unit filename="inc/keymatrix.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 			<Option target="Just Compile" />
