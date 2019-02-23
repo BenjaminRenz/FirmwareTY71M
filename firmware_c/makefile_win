@@ -24,7 +24,6 @@ createBin:
 	@echo "Finished compilation"
 	@echo "ObjCopy"
 	$(objcp) -O binary $(elfFile) $(firmwareOUT)
-	del /F /Q  $(elfFile)
 clean:
 	@echo "Delete old bin file"
 	del /F /Q $(firmwareOUT)

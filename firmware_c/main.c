@@ -11,12 +11,12 @@
 //Note USB supports up to 8 endpoints
 
 void SystemInit(){
-    //section: Clock configuration
+    //section: Clock configurationta
 
     //Unlock configuration registers
     SYS_UnlockReg();
     //Configure clock for periphials, pll, ...
-    CLK_T* ClockContrMemoryMap=(CLK_T*) CLK_BASE;
+    CLK_T* ClockContrMemoryMap=(CLK_T*) CLK_BASE_POINTER;
     ClockContrMemoryMap->AHBCLK=CLK_AHBCLK_ISP_Msk;
     ClockContrMemoryMap->APBCLK=CLK_APBCLK_USBD_Msk|CLK_APBCLK_I2C1_Msk|CLK_APBCLK_UART0_Msk;
     ClockContrMemoryMap->CLKDIV=CLK_CLKDIV_USB(3)|CLK_CLKDIV_HCLK(2);
@@ -58,11 +58,15 @@ void SystemInit(){
 }
 int main(void){
     keydata keys[8][9]={0};
-    keys[0][0].blue=255;
-    keys[0][0].red=255;
-    keys[0][0].green=255;
+    uint8_t val=0;
     while(1){
+        val++;
         setRGB_row(keys);
+        for(int row=0;row<9;row++){
+            for(int col=0;col<8;col++){
+                keys[col][row].green=val;
+            }
+        }
     }
 
 }

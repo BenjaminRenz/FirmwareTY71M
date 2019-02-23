@@ -54,10 +54,10 @@
   reset init
      
 11) flash image
-  flash write_image ./firmware_c/out/firmware.bin
+  flash write_image erase ./../firmware_c/out/firmware.bin
 
 12) verfy flash
-  flash verify_bank 0 ./firmware_c/out/firmware.bin
+  flash verify_bank 0 ./../firmware_c/out/firmware.bin
   
 13)
   reset run

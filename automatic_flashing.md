@@ -20,4 +20,7 @@ NOT WORKING YET
 3) Install:
     StLinkDriver: https://www.st.com/content/st_com/en/products/development-tools/software-development-tools/stm32-software-development-tools/stm32-programmers/stsw-link004.html (bottom of page, you need to be registered)
 
-4)
+4) In GDB
+
+file ./out/firmware.elf
+load
