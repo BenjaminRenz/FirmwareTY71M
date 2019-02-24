@@ -1,7 +1,7 @@
 # FirmwareTY71M
 Firmware for NUC122 based keyboards (eg. drevo calibur)
 
-## The project is UNFINISHED, at the current state of development your keyboard will become a brick if you flash this firmware
+## The project is UNFINISHED, at the current state of development your keyboard will become a brick ( with controllable rgb-led's xD ) if you flash this firmware
 
 ## Contents of this repo
 This repository contains the necessary development tools for the firmware. The IDE and compiler is included to have relative paths and make it easyer to get started with development.
