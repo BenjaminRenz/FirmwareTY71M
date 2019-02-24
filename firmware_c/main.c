@@ -10,6 +10,26 @@
 
 //Note USB supports up to 8 endpoints
 
+/*Column Layout
+┌────────────────────────────────────────────────────┐
+│ 0  1  2  3  4  5  6  7  0  1  2  3  4   5  6  7  4 │
+│ 0   1  2  3  4  5  6  7  0  1  2  3  4  5  6  7  5 │
+│  0   1  2  3  4  5  6  7  0  1  2  3   4           │
+│ 0  7  1  2  3  4  5  6  3  0  1  2    3       6    │
+│ 0  1  2  ---------3--------  4  5  6   7   5  6  7 │
+└────────────────────────────────────────────────────┘
+*/
+
+/*Row Layout
+┌────────────────────────────────────────────────────┐
+│ 0  0  0  0  0  0  0  0  5  5  5  5  5   5  5  5  8 │
+│ 1   1  1  1  1  1  1  1  6  6  6  6  6  6  6  6  8 │
+│  2   2  2  2  2  2  2  2  7  7  7  7   7           │
+│ 3  8  3  3  3  3  3  3  3  8  8  8    8       8    │
+│ 4  4  4  ---------4--------  4  4  4   4   7  7  7 │
+└────────────────────────────────────────────────────┘
+*/
+
 void SystemInit(){
     //section: Clock configurationta
 
@@ -43,30 +63,43 @@ void SystemInit(){
     //UART0 - RXD PC4, TXD PC5
     GPA_MFP=0x00000C00; //I2C1 SCL and SDA
     GPB_MFP=0x00000002; //UART0 Rx and Tx
+    GPC_MFP=0x00000000;
+    GPD_MFP=0x00000000;
+    GPF_MFP=0x00000000; //DISABLE I2C0
     ALT_MFP=0x60000000;
 
     //GPIO Config (input 0b00 (in), push pull (out) 0b01, opendrain 0b10, bidirect 0b11 (default))
     //TODO bluetooth 3 version PC2 and PC3 configuration as input/output?
-    GPIOA_PMD=0x41FFFFFF; //pa12 out backlEN, pa13 in matrix, pa14 in battery chrg, pa15 out matrix
-    GPIOB_PMD=0xCFD4FFFF; //pb8 in matrix, pb9 out matrix, pb10 out shift_clk, pb14 in powerSRC?
-    GPIOC_PMD=0xF555FFF5; //pc0 out for shift_rclk, pc1 out shift_data, pc8-pc13 out matrix
-    GPIOD_PMD=0xFFFFF000; //pd0-pd5 in matrix
-    GPIOF_PMD=0x0000000F; //pf2 in matrix,pf3 in powerSRC?
+    GPIOA_PMD=0x05FFFFFF; //pa12 out backlEN, pa13 out matrix, pa14 in battery chrg, pa15 in matrix
+    GPIOB_PMD=0xCFD1FFFF; //pb8 out matrix, pb9 in matrix, pb10 out shift_clk, pb14 in powerSRC?
+    GPIOC_PMD=0xF000FFF5; //pc0 out for shift_rclk, pc1 out shift_data, pc8-pc13 in matrix
+    GPIOD_PMD=0xFFFFF555; //pd0-pd5 out matrix
+    GPIOF_PMD=0x0000001F; //pf2 out matrix,pf3 in powerSRC?
 
     //TODO reset usb (USBD_RST IPRSTC2[27])
 
 }
 int main(void){
     keydata keys[8][9]={0};
-    uint8_t val=0;
+    uint8_t val_red=0;
+    uint8_t val_green=0;
+    uint8_t val_blue=0;
     while(1){
-        val++;
-        setRGB_row(keys);
+        //val_red++;
+        //val_green++;
+        //val_blue++;
+        if(val_green++==100){
+            val_blue++;
+            val_green=0;
+        }
         for(int row=0;row<9;row++){
             for(int col=0;col<8;col++){
-                keys[col][row].green=val;
+                keys[col][row].red=val_red;
+                //keys[col][row].green=val_green;
+                keys[col][row].blue=val_blue;
             }
         }
+        setRGB(keys);
+        getPressedKeys(keys);
     }
-
 }

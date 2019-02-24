@@ -6,8 +6,11 @@
 typedef struct{
     uint8_t state;
     uint8_t red;
+    uint8_t red_temp_brightness;
     uint8_t green;
+    uint8_t green_temp_brightness;
     uint8_t blue;
+    uint8_t blue_temp_brightness;
 }keydata;
 
 /*Column Layout
@@ -58,16 +61,13 @@ void enable_column(uint8_t colnum_to_enable){
     }
 }
 
-void setRGB_row(keydata KeyDataListIN[8][9]){
-    static uint8_t rgb_timer=0;
-    uint8_t rgb_time_mask=(1<<rgb_timer++);
-    if(rgb_timer>8){
-        rgb_timer=0;
-    }
-    for(uint8_t currentcolnum=0;currentcolnum<8;currentcolnum++){ //and
+void setRGB(keydata KeyDataListIN[8][9]){
+    for(uint8_t currentcolnum=0;currentcolnum<8;currentcolnum++){
         backlight_power_off();
         for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop for green
-            if(KeyDataListIN[currentcolnum][currentrow].green&rgb_time_mask){
+            KeyDataListIN[currentcolnum][currentrow].green_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].green;
+            //to equaly spread the on/off cycles this variable is used to store a overflowing uint8
+            if(KeyDataListIN[currentcolnum][currentrow].green_temp_brightness<KeyDataListIN[currentcolnum][currentrow].green){ //green_temp_brightness has wrapped around enable led
                 GPIOC1_DOUT=0; //Set data line on
                 shift_one_bit();
             }else{
@@ -76,7 +76,8 @@ void setRGB_row(keydata KeyDataListIN[8][9]){
             }
         }
         for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop over blue
-            if(KeyDataListIN[currentcolnum][currentrow].blue&rgb_time_mask){
+            KeyDataListIN[currentcolnum][currentrow].blue_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].blue;
+            if(KeyDataListIN[currentcolnum][currentrow].blue_temp_brightness<KeyDataListIN[currentcolnum][currentrow].blue){
                 GPIOC1_DOUT=0; //Set data line on
                 shift_one_bit();
             }else{
@@ -85,7 +86,8 @@ void setRGB_row(keydata KeyDataListIN[8][9]){
             }
         }
         for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop over red
-            if(KeyDataListIN[currentcolnum][currentrow].red&rgb_time_mask){
+            KeyDataListIN[currentcolnum][currentrow].red_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].red;
+            if(KeyDataListIN[currentcolnum][currentrow].red_temp_brightness<KeyDataListIN[currentcolnum][currentrow].red){
                 GPIOC1_DOUT=0; //Set data line on
                 shift_one_bit();
             }else{
@@ -95,7 +97,7 @@ void setRGB_row(keydata KeyDataListIN[8][9]){
         }
         enable_column(currentcolnum); //TODO time this with a timer
         backlight_power_on();
-        delay(1<<rgb_timer);
+        delay(1<<5);
     }
     backlight_power_off();
 }

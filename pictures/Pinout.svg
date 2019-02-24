@@ -14,7 +14,7 @@
    viewBox="0 0 744.09448819 1052.3622047"
    id="svg2"
    version="1.1"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
    sodipodi:docname="Pinout.svg">
   <defs
      id="defs4" />
@@ -26,8 +26,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.959798"
-     inkscape:cx="490.08296"
-     inkscape:cy="892.72456"
+     inkscape:cx="454.51224"
+     inkscape:cy="849.35366"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -44,9 +44,9 @@
      inkscape:bbox-paths="true"
      inkscape:snap-global="true"
      inkscape:window-width="3840"
-     inkscape:window-height="2085"
-     inkscape:window-x="-9"
-     inkscape:window-y="-9"
+     inkscape:window-height="2097"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1">
     <sodipodi:guide
        position="41.42857,1014.6429"
@@ -2653,5 +2653,17 @@
            width="689.02612"
            id="rect5627-1-6-2-5-2-7-6-4-9-8-1-4-2-5-0-51" /></flowRegion><flowPara
          id="flowPara5629-1-6-6-3-3-8-6-1-8-2-3-8-7-2-1-6"
-         style="font-size:40px;line-height:1.25">not connected</flowPara></flowRoot>  </g>
+         style="font-size:40px;line-height:1.25">not connected</flowPara></flowRoot>    <flowRoot
+       xml:space="preserve"
+       id="flowRoot4159"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+       transform="matrix(0.9375,0,0,0.9375,-302.8241,-201.63194)"><flowRegion
+         id="flowRegion4161"><rect
+           id="rect4163"
+           width="443.45694"
+           height="104.5508"
+           x="388.65619"
+           y="328.53979" /></flowRegion><flowPara
+         id="flowPara4165"
+         style="font-size:13.33333302px">This side is pulled up to +VCC for key matrix</flowPara></flowRoot>  </g>
 </svg>

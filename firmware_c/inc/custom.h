@@ -42,16 +42,47 @@
 #define GPIOD_PMD (*((uint32_t*)(GP_BA+0x0C0)))
 #define GPIOF_PMD (*((uint32_t*)(GP_BA+0x140)))
 
+#define GPIOA_PIN (*((uint32_t*)(GP_BA+0x010))) //input registers
+#define GPIOB_PIN (*((uint32_t*)(GP_BA+0x050)))
+#define GPIOC_PIN (*((uint32_t*)(GP_BA+0x090)))
+#define GPIOD_PIN (*((uint32_t*)(GP_BA+0x0D0)))
+#define GPIOF_PIN (*((uint32_t*)(GP_BA+0x150)))
 
+//backlight
 #define GPIOA12_DOUT (*((uint32_t*)(GP_BA+0x230))) //high backlight on, low backlight off
 #define GPIOB10_DOUT (*((uint32_t*)(GP_BA+0x268))) //clock to shift through the rgister
 #define GPIOC0_DOUT  (*((uint32_t*)(GP_BA+0x280)))//pull low then high to display internal shifted values on the output pins
 #define GPIOC1_DOUT  (*((uint32_t*)(GP_BA+0x284)))//connected to data in pin on first shift register
 
+//keymatrix
+//out PA13 PD0 PD1 - PD5 PF2 PB8
+#define GPIOA13_DOUT_POINTER ((uint32_t*)(GP_BA+0x234))
+#define GPIOD0_DOUT_POINTER  ((uint32_t*)(GP_BA+0x2C0))
+#define GPIOD1_DOUT_POINTER  ((uint32_t*)(GP_BA+0x2C4))
+#define GPIOD2_DOUT_POINTER  ((uint32_t*)(GP_BA+0x2C8))
+#define GPIOD3_DOUT_POINTER  ((uint32_t*)(GP_BA+0x2CC))
+#define GPIOD4_DOUT_POINTER  ((uint32_t*)(GP_BA+0x2D0))
+#define GPIOD5_DOUT_POINTER  ((uint32_t*)(GP_BA+0x2D4))
+#define GPIOF2_DOUT_POINTER  ((uint32_t*)(GP_BA+0x348))
+#define GPIOB8_DOUT_POINTER  ((uint32_t*)(GP_BA+0x260))
+//in
+#define GPIOB9_DOUT_POINTER  ((uint32_t*)(GP_BA+0x264))
+#define GPIOC13_DOUT_POINTER ((uint32_t*)(GP_BA+0x2B4))
+#define GPIOC12_DOUT_POINTER ((uint32_t*)(GP_BA+0x2B0))
+#define GPIOC11_DOUT_POINTER ((uint32_t*)(GP_BA+0x2AC))
+#define GPIOC10_DOUT_POINTER ((uint32_t*)(GP_BA+0x2A8))
+#define GPIOC9_DOUT_POINTER  ((uint32_t*)(GP_BA+0x2A4))
+#define GPIOC8_DOUT_POINTER  ((uint32_t*)(GP_BA+0x2A0))
+#define GPIOA15_DOUT_POINTER ((uint32_t*)(GP_BA+0x23C))
+
 //System Manager defines
 #define GCR_BA (0x50000000)
-#define GPA_MFP (*((uint32_t*)(GCR_BA+0x30)))  //GPIO A Input Type Register
-#define GPB_MFP (*((uint32_t*)(GCR_BA+0x34)))  //GPIO B Input Type Register
+#define GPA_MFP (*((uint32_t*)(GCR_BA+0x30)))  //GPIO A Alternative Func Register
+#define GPB_MFP (*((uint32_t*)(GCR_BA+0x34)))  //GPIO B Alternative Func Register
+#define GPC_MFP (*((uint32_t*)(GCR_BA+0x38)))  //GPIO C Alternative Func Register
+#define GPD_MFP (*((uint32_t*)(GCR_BA+0x3C)))  //GPIO D Alternative Func Register
+#define GPF_MFP (*((uint32_t*)(GCR_BA+0x44)))  //GPIO F Alternative Func Register
+
 #define ALT_MFP (*((uint32_t*)(GCR_BA+0x50)))  //GPIO Alternative Functions
 #define ALT_MFP1 (*((uint32_t*)(GCR_BA+0x54))) //GPIO Alternative Functions
 
