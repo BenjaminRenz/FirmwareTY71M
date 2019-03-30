@@ -4,7 +4,7 @@ SECTION MICROCONRTOLLER
 	NUC123LD4AN (labeled as M103CB 171301)
 
 SECTION EEPROM
-	EEPROM 24C256 -> over i2c
+	EEPROM 24C256 -> over i2c1 @ 3.3v supply voltage
 
 SECTION Bluetooth
 	Bluetooth 4.0 model also called V1.3

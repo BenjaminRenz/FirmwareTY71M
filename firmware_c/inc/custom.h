@@ -86,6 +86,10 @@
 #define ALT_MFP (*((uint32_t*)(GCR_BA+0x50)))  //GPIO Alternative Functions
 #define ALT_MFP1 (*((uint32_t*)(GCR_BA+0x54))) //GPIO Alternative Functions
 
+#define IPRSTC1 (*((uint32_t*)(GCR_BA+0x08))) //Peripheral Reset Control 2
+#define IPRSTC2 (*((uint32_t*)(GCR_BA+0x0C))) //Peripheral Reset Control 2
+
+
 static __inline void  SYS_UnlockReg(void){
     while(REGWRPROT != 0x00000001){ //Check if unlocked
         REGWRPROT = 0x59;           //Write unlock sequence
@@ -97,6 +101,22 @@ static __inline void  SYS_UnlockReg(void){
 static __inline void SYS_LockReg(void){ //Relock Register by writing arbitrary data to it
     REGWRPROT = 0;
 }
+
+static __inline void I2C1_start_reset(){
+    IPRSTC2|=(1<<9);
+}
+static __inline void I2C1_end_reset(){
+    IPRSTC2&=~(1<<9);
+}
+
+static __inline void USART0_start_reset(){
+    IPRSTC2|=(1<<16);
+}
+static __inline void USART0_end_reset(){
+    IPRSTC2&=~(1<<16);
+}
+
+
 
 typedef struct{
     uint32_t PWRCON;
