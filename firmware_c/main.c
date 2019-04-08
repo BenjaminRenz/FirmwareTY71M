@@ -11,8 +11,10 @@
 #include "timer.h"
 
 //microcontroller is a NUC123LD4AN with 68kb flash and 20kb sram
-//goto pdf reference: http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
-
+//goto pdf reference:
+/*
+http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
+*/
 
 /*Column Layout
 ┌────────────────────────────────────────────────────┐
