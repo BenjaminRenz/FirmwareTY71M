@@ -1,6 +1,10 @@
 #ifndef USB_H_INCLUDED
 #define USB_H_INCLUDED
 
+//Sources
+/*
+https://www-user.tu-chemnitz.de/~heha/viewchm.php/hs/usb.chm/usb6.htm
+*/
 #define USB_BA 0x40060000
 #define USB_SRAM_SETUP (*((uint32_t*)(USB_BA+0x100)))
 #define USB_SRAM_EP0 (*((uint32_t*)(USB_BA+0x108)))
@@ -69,9 +73,9 @@ static __inline void USB_init(){
     USB_BUFFSEG1=0x00000048;
     USB_setup_ep(1,USB_setup_ep_as_out,0,0);
     USB_BUFFSEG2=0x00000088;
-    USB_setup_ep(2,USB_setup_ep_as_in,0,1);
+    USB_setup_ep(2,USB_setup_ep_as_in,0,1); //keyboard from host seen as in
     USB_BUFFSEG3=0x000000C8;
-    USB_setup_ep(3,USB_setup_ep_as_in,0,2);
+    USB_setup_ep(3,USB_setup_ep_as_in,0,2); //mouse emulation?
 
     USB_end_reset();
     //enable USB and BUS interrupt events
@@ -87,7 +91,16 @@ enum {  USB_INT_EP7_MASK=(1<<23),USB_INT_EP6_MASK=(1<<22),
         USB_INT_FLDET_MASK=(1<<2),  //attach/detach event
         USB_INT_USB_MASK=(1<<1),    //
         USB_INT_BUS_MASK=(1<<0)     //
-     };
+};
+
+enum {  USB_ATTR_TIMEOUT_MASK=(1<<3),USB_ATTR_RESUME_MASK=(1<<2),
+        USB_ATTR_SUSPEND_MASK=(1<<1),USB_ATTR_USBRST_MASK=(1<<0)
+};
+
+enum {  USB_EPSTS_INACK=0x000,USB_EPSTS_INNAK=0x001, //Possible bus states for endpoints
+        USB_EPSTS_OUTDATA0=0x010,USB_EPSTS_SETUPACK=0x011,
+        USB_EPSTS_OUTDATA1=0x110,USB_EPSTS_ISOCHREND=0x111,
+};
 static __inline void USB_stop_transactions(int ep){
 
 }
@@ -103,7 +116,8 @@ static __inline void USB_enable_host_wakeup(void){ //also called SE1
 static __inline void USB_disable_host_wakeup(void){
     USB_ATTR&=0xffffffdf; //host wakeup enable bit unset
 }
-void USB_send_ep0(){
+void USB_sendEndpoint(uint32_t ep, uint8_t* data, uint32_t packetlength){
+    if //check if endpoint is busy
     //copy data to EP0 sram
     //write MAXPLD
 
@@ -113,12 +127,40 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
     //Read EPSTS (USB_EPSTS[31:8])+EPEVT7~0 (USB_INTSTS[23:16]) to find out state and endpoint
     //(?) read USB_ATTR to aknowledge bus events
     if(USB_INTSTS&USB_INT_SETUP_MASK){//the received packet was a setup packet, return out descriptor info from descriptor.h
+        //copy sram to other memory location
+        byte* usbBuffer=?;
+        if(usbBuffer[0]&0x60==0x00){ //Standard request (defined by USB standard)
+            if(usbBuffer[0]&0x03==0x00){ //Device
+                if(usbBuffer[1]=0x00){ //GET_STATUS
 
-        if()
+                }
+            }else if(usbBuffer[0]&0x03==0x01){ //Interface
 
+            }else if(usbBuffer[0]&0x03==0x02){ //Endpoint
 
-    }else if(USB_INTSTS&){
+            }
+        }else if(usbBuffer[0]&0x60==0x20){ //Class request (defined by USB class in use eg. HID)
 
+        }else if(usbBuffer[0]&0x60==0x40){ //Vendor Request (defined by USER/VENDOR)
+
+        }
+
+    }else if(USB_INTSTS&USB_INT_BUS_MASK){ //BUS event
+        if(USB_ATTR&USB_ATTR_RESUME_MASK){  //Host not responding by ACK packets
+
+        }else if(USB_ATTR&USB_ATTR_SUSPEND_MASK){ //Resume from suspend
+
+        }else if(USB_ATTR&USB_ATTR_TIMEOUT_MASK){ //Cable plugged out/host sleep
+
+        }else if(USB_ATTR&USB_ATTR_USBRST_MASK){ //Reset from host by se0
+
+        }
+        //Clear BUS Interrupt
+        USB_INTST=USB_INT_BUS_MASK;
+    }else if(USB_INTSTS&USB_INT_USB_MASK){ //SETUP/IN/OUT ACK event
+    }
+    }else if(USB_INTSTS&USB_INT_FLDET_MASK){
+        //IGNORE
     }
 }
 
