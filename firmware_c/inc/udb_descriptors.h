@@ -35,12 +35,15 @@ const uint8_t* USB_Config_Descriptor={
 
 //INTERFACE DESCRIPTORS
 const uint8_t* USB_INTERFACE_Descriptor={
-    0x00,
-    0x04,
-    0x02,
-    0x??,
-    0x02,
-    0x
+    0x09,                   //bLength           , 1byte, descriptor size in bytes
+    0x04,                   //bDescriptorType   , 1byte, descriptor type (=4 for interface)
+    0x01,                   //bInterfaceNumber  , 1byte,
+    0x00,                   //bAlternateSetting , 1byte, can be used to switch between interface modes (eg. soundcard frequencys) by defining multiple possible configs for one endpoint
+    0x01,                   //bNumEndpoints     , 1byte, number if used endpoints for this interface
+    0x03,                   //bInterfaceClass   , 1byte, base class code of interface (eg: 0x03 for HID), defined by USB Org
+    0x0                     //bInterfaceSubClass, 1byte, sub class code of interface (eg. )
+
+
 //ENDPOINT DESCRIPTORS
 const uint8_t* USB_ENDPOINT_Descriptor={
 #endif // UDB_DESCRIPTORS_H_INCLUDED
