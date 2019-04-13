@@ -10,8 +10,8 @@ void i2c_eeprom_read_buffer( int deviceaddress, unsigned int eeaddress, byte *bu
 
 
 
-#define EEPROM_read_address 0xA0 //TODO CHANGE
-#define EEPROM_write_address (EEPROM_read_address+1) //TODO CHANGE
+#define EEPROM_read_address 0xA0 //TODO test if correct
+#define EEPROM_write_address (EEPROM_read_address+1) //TODO test if correct
 
 void EEEPROM::i2c_eeprom_write_byte(, unsigned int eeaddress, byte data ) {
   int rdata = data;
