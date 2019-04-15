@@ -26,26 +26,27 @@ const uint8_t USB_DEVICE_Descriptor[]={ //warning! first byte is least significa
     0x55, 0x2A,             //idVendor          , 2byte, Assigned id from USB org, use random for hobby project
     0x01, 0x00,             //idProduct         , 2byte, Assigned by manufacturer (me)
     0x01, 0x00,             //bcdDevice         , 2byte, Device Release Number by manufacturer (me)
-    0x00,                   //iManufacturer     , 1byte, index of manufacturer string (0x00 if not existing)
-    0x00,                   //iProduct          , 1byte, index of productname sting
-    0x00,                   //iSerialNumber     , 1byte, index of serialnum string
+    0x01,                   //iManufacturer     , 1byte, index of manufacturer string (0x00 if not existing)
+    0x02,                   //iProduct          , 1byte, index of productname sting
+    0x03,                   //iSerialNumber     , 1byte, index of serialnum string
     0x01                    //bNumConfigurations, 1byte, number of configuration Descriptors (e.g. for one bus powered and one self powered device 0x02)
 };
 
 //CONGIFURATION DESCRIPTORS
 const uint8_t USB_CONFIG_Descriptor[]={
-    0x??,                   //bLength           , 1byte, descriptor size in bytes
+    0x09,                   //bLength           , 1byte, descriptor size in bytes
     0x02,                   //bDescriptorType   , 1byte, descriptor type (=2 for configuration descriptor)
     0x??,0x??,              //wTotalLength      , 2byte, length of itself+interface descriptors+endpoints underneath in hirachy
     USB_CD_NUM_IFACES,      //bNumInterfaces    , 1byte,
     0x01,                   //bConfigurationValue, 1byte,
-                            //iConfiguration    , 1byte, index of string describing this configuration
+    0x04,                   //iConfiguration    , 1byte, index of string describing this configuration
     0xA0,                   //bmAttributes      , 1byte, Bitconfig, D7=1, D6 Self Powered, D5 Remote Wkup, rest=0
     USB_CD_POWER            //bMaxPower         , 1byte, max power consumption in x*2mA
 };
 
 //INTERFACE DESCRIPTORS
-const uint8_t USB_INTERFACE_Descriptor[]={
+//for keyboard
+const uint8_t USB_INTERFACE_Descriptor1[]={
     0x09,                   //bLength           , 1byte, descriptor size in bytes
     0x04,                   //bDescriptorType   , 1byte, descriptor type (=0x04 for interface)
     0x00,                   //bInterfaceNumber  , 1byte, interface number can either be specified or if 0x00 will be determined/incremented automatically
@@ -54,20 +55,50 @@ const uint8_t USB_INTERFACE_Descriptor[]={
     0x03,                   //bInterfaceClass   , 1byte, base class code of interface (eg: 0x03 for HID), defined by USB Org
     0x01,                   //bInterfaceSubClass, 1byte, sub class code of interface (eg. HID: 0x00 for none and 0x01 for boot interface)
     0x01,                   //bInterfaceProtocol, 1byte, protocol code (e.g.: 0x00 none, 0x01 keyboard, 0x02 Mouse)
-    0x00,                   //iInterface        , 1byte, index of string for Descriptor (can be 0x00 to indicate that there is none)
+    0x05                    //iInterface        , 1byte, index of string for Descriptor (can be 0x00 to indicate that there is none)
+}
+//for mouse
+const uint8_t USB_INTERFACE_Descriptor2[]={
+    0x09,                   //bLength           , 1byte, descriptor size in bytes
+    0x04,                   //bDescriptorType   , 1byte, descriptor type (=0x04 for interface)
+    0x00,                   //bInterfaceNumber  , 1byte, interface number can either be specified or if 0x00 will be determined/incremented automatically
+    0x00,                   //bAlternateSetting , 1byte, can be used to switch between interface modes (eg. soundcard frequencys) by defining multiple possible configs for one endpoint
+    0x01,                   //bNumEndpoints     , 1byte, number if used endpoints for this interface
+    0x03,                   //bInterfaceClass   , 1byte, base class code of interface (eg: 0x03 for HID), defined by USB Org
+    0x01,                   //bInterfaceSubClass, 1byte, sub class code of interface (eg. HID: 0x00 for none and 0x01 for boot interface)
+    0x02,                   //bInterfaceProtocol, 1byte, protocol code (e.g.: 0x00 none, 0x01 keyboard, 0x02 Mouse)
+    0x06                    //iInterface        , 1byte, index of string for Descriptor (can be 0x00 to indicate that there is none)
 }
 
 //ENDPOINT DESCRIPTORS
-const uint8_t USB_ENDPOINT_Descriptor[]={
+//for interface 1
+const uint8_t USB_ENDPOINT_Descriptor1[]={
     0x07,                   //bLength           , 1byte, descriptor size in bytes
     0x05,                   //bDescriptorType   , 1byte, descriptor type (=0x05 for interface)
-    0x??,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
-    0x??,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
-    0x??,0x??,              //wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
+    0x01,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
+    0x03,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
+    USB_SRAM_ENDP_SIZE&0x00FF,(USB_SRAM_ENDP_SIZE&0xff00)>>8,//wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
+    USB_EPD_pollingtime     //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
+}
+//for interface 2
+const uint8_t USB_ENDPOINT_Descriptor2[]={
+    0x07,                   //bLength           , 1byte, descriptor size in bytes
+    0x05,                   //bDescriptorType   , 1byte, descriptor type (=0x05 for interface)
+    0x02,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
+    0x03,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
+    USB_SRAM_ENDP_SIZE&0x00FF,(USB_SRAM_ENDP_SIZE&0xff00)>>8,//wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
     USB_EPD_pollingtime     //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
 }
 
 //STRING DESCRIPTORS
+/*Used String List
+    0x01    Manufacturer String
+    0x02    Productname String
+    0x03    Serialnumber String
+    0x04    Configuration String
+    0x05    InterfaceKeyboard String
+    0x06    InterfaceMouse String
+*/
 const uint8_t USB_STRING_Descriptor_1[]={
 
 }

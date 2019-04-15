@@ -70,8 +70,8 @@
 		<Unit filename="inc/nvic.h" />
 		<Unit filename="inc/timer.h" />
 		<Unit filename="inc/uart.h" />
-		<Unit filename="inc/udb_descriptors.h" />
 		<Unit filename="inc/usb.h" />
+		<Unit filename="inc/usb_descriptors.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 			<Option target="Just Compile" />
