@@ -25,9 +25,10 @@ https://www.beyondlogic.org/usbnutshell/usb6.shtml#GetDescriptor
 //Register and Address definitions
 #define USB_BA 0x40060000
 
-#define USB_SRAM_SETUP_ADDR (*((uint32_t*)(USB_BA+0x100)))
-#define USB_SRAM_EP_ADDR(epnum) (*((uint32_t*)(USB_BA+0x100+USB_SRAM_SETUP_SIZE+USB_SRAM_ENDP_SIZE*epnum)))
-#define USB_MAXPLD_ADDR(epnum) (*((uint32_t*)(USB_BA+0x504+0x10*epnum)))
+#define USB_SRAM_SETUP_START (*((uint32_t*)(USB_BA+0x100)))
+#define USB_SRAM_EP_START(epnum) (*((uint32_t*)(USB_BA+0x100+USB_SRAM_SETUP_SIZE+USB_SRAM_ENDP_SIZE*epnum)))
+#define USB_SRAM_EP_ADDR(epnum) ((uint32_t*)(USB_BA+0x100+USB_SRAM_SETUP_SIZE+USB_SRAM_ENDP_SIZE*epnum))
+#define USB_MAXPLD(epnum) (*((uint32_t*)(USB_BA+0x504+0x10*epnum)))
 
 #define USB_INTEN (*((uint32_t*)(USB_BA+0x000)))
 #define USB_INTSTS (*((uint32_t*)(USB_BA+0x004)))
@@ -137,9 +138,10 @@ static __inline void USB_disable_host_wakeup(void){
 #define USB_is_attached (USB_FLDET&0x00000001)
 void USB_sendEndpoint(uint32_t ep, uint8_t* data, uint32_t packetlength){
     if //check if endpoint is busy
-    //copy data to EP0 sram
-    //write MAXPLD
-    USB_MXPLDBA+
+    for(uint32_t i=0;i<packetlength;i++){
+        USB_SRAM_EP_ADDR(epnum)[i]=data[i];
+    }
+    USB_MAXPLD_ADDR(ep)=packetlength;
 }
 
 static __inline void USB_setAddress(uint32_t addr){
@@ -172,9 +174,10 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
 
                     }else if((usbSRAM[1]==0x05)&&(!(usbSRAM[0]&0x80))){ //host wants to set the devices address
                         uint32_t address=0;
-
+                        //TODO get address
+                        USB_setAddress(address);
                     }else if((usbSRAM[1]==0x06)&&( (usbSRAM[0]&0x80))){ //device should return device descriptor
-
+                        USB_sendEndpoint(0,USB_DEVICE_Descriptor,USB_DEVICE_Descriptor[0]);
                     }else if((usbSRAM[1]==0x07)&&(!(usbSRAM[0]&0x80))){ //host wants to set a device descriptor
 
                     }else if((usbSRAM[1]==0x08)&&( (usbSRAM[0]&0x80))){ //device should return configuration descriptor

@@ -99,7 +99,17 @@ const uint8_t USB_ENDPOINT_Descriptor2[]={
     0x05    InterfaceKeyboard String
     0x06    InterfaceMouse String
 */
-const uint8_t USB_STRING_Descriptor_1[]={
-
+const uint8_t USB_STRING_Descriptor_0x01[]={
+    'D','r','e','v','o'
 }
+const uint8_t USB_STRING_Descriptor_0x02[]={
+    'C','a','l','i','b','u','r'
+}
+const uint8_t USB_STRING_Descriptor_0x03[]={
+    '4','2','0'
+}
+const uint8_t USB_STRING_Descriptor_0x04[]={
+    '4','2','0'
+}
+
 #endif // UDB_DESCRIPTORS_H_INCLUDED
