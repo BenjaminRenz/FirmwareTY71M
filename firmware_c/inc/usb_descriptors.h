@@ -91,7 +91,9 @@ const uint8_t USB_ENDPOINT_Descriptor2[]={
 }
 
 //STRING DESCRIPTORS
+//Zeros are needed because strings are expected to be coded in utf16
 /*Used String List
+    !!0x00  Supported Languages String Descriptor
     0x01    Manufacturer String
     0x02    Productname String
     0x03    Serialnumber String
@@ -99,17 +101,50 @@ const uint8_t USB_ENDPOINT_Descriptor2[]={
     0x05    InterfaceKeyboard String
     0x06    InterfaceMouse String
 */
+const uint8_t USB_STRING_Descriptor_0x00[]={
+    0x04,                   //bLength           , 1byte, descriptor size in bytes
+    0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03) for string descriptor
+    0x09,0x04               //wLangId[0]        , 2byte, Supported Language Code 0, (=0x0409 for English US)
+}
+
 const uint8_t USB_STRING_Descriptor_0x01[]={
-    'D','r','e','v','o'
+    0x0C,                   //bLength           , 1byte, descriptor size in bytes
+    0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
+    'D',0,'r',0,'e',0,'v',0,'o',0
 }
 const uint8_t USB_STRING_Descriptor_0x02[]={
-    'C','a','l','i','b','u','r'
+    0x10,                   //bLength           , 1byte, descriptor size in bytes
+    0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
+    'C',0,'a',0,'l',0,'i',0,'b',0,'u',0,'r',0
 }
 const uint8_t USB_STRING_Descriptor_0x03[]={
-    '4','2','0'
+    0x08,                   //bLength           , 1byte, descriptor size in bytes
+    0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
+    '4',0,'2',0,'0',0
 }
 const uint8_t USB_STRING_Descriptor_0x04[]={
-    '4','2','0'
+    0x08,                   //bLength           , 1byte, descriptor size in bytes
+    0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
+    '4',0,'2',0,'0',0
+}
+const uint8_t USB_STRING_Descriptor_0x05[]={
+    0x12,                   //bLength           , 1byte, descriptor size in bytes
+    0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
+    'K',0,'e',0,'y',0,'b',0,'o',0,'a',0,'r',0,'d',0
+}
+const uint8_t USB_STRING_Descriptor_0x06[]={
+    0x0C,                   //bLength           , 1byte, descriptor size in bytes
+    0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
+    'M',0,'o',0,'u',0,'s',0,'e',0
+}
+const uint8_t* USB_STRING_DESCRIPTOR_ARRAY[]={
+    USB_STRING_Descriptor_0x00, //Used to let the host know, wich languages are supported
+    USB_STRING_Descriptor_0x01,
+    USB_STRING_Descriptor_0x02,
+    USB_STRING_Descriptor_0x03,
+    USB_STRING_Descriptor_0x04,
+    USB_STRING_Descriptor_0x05,
+    USB_STRING_Descriptor_0x06
 }
 
 #endif // UDB_DESCRIPTORS_H_INCLUDED
