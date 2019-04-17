@@ -54,6 +54,15 @@ https://www.beyondlogic.org/usbnutshell/usb6.shtml#GetDescriptor
 
 #define USB_is_attached_to_host() (USB_FLDET&0x00000001)
 
+static __inline void USB_EP_TO_DATAn(ep,n){
+    if(n){ //setDATA1
+        USB_CFG(ep)|=0x00000080;
+    }else{ //setDATA0
+        USB_CFG(ep)&=0xffffff7f;
+    }
+
+}
+
 enum {USB_setup_ep_as_in=1,USB_setup_ep_as_out=0};
 static __inline void USB_setup_ep(int ep,int in_or_out,int is_isochronous, int ep_addr){ //ep 0-7, in_or_out enum, is_isochronous bit, ep_addr 0-15
     uint32_t* cfgRegist=(uint32_t*)(USB_BA+0x508+(ep<<4));
@@ -174,7 +183,7 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
 
                     }else if((usbSRAM[1]==0x05)&&(!(usbSRAM[0]&0x80))){ //host wants to set the devices address
                         uint32_t address=0;
-                        //TODO get address
+                        address=usbSRAM[2]+usbSRAM[3]<<8;
                         USB_setAddress(address);
                     }else if((usbSRAM[1]==0x06)&&( (usbSRAM[0]&0x80))){ //device should return device descriptor
                         USB_sendEndpoint(0,USB_DEVICE_Descriptor,USB_DEVICE_Descriptor[0]);
@@ -257,11 +266,12 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
         if(USB_ATTR&USB_ATTR_RESUME_MASK){  //Resume from suspend
             USB_enable_controller();
         }else if(USB_ATTR&USB_ATTR_SUSPEND_MASK){ //Cable plugged out/host is sleeping (bus idle for <3mS)
-
+            USB_disable_phy();
         }else if(USB_ATTR&USB_ATTR_TIMEOUT_MASK){ //Host not responding by ACK packets
 
         }else if(USB_ATTR&USB_ATTR_USBRST_MASK){ //Reset from host by se0
-
+            USB_enable_controller();
+            //TODO reset controller
         }
         //Clear BUS Interrupt
         USB_INTST=USB_INT_BUS_MASK;
