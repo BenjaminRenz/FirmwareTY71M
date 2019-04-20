@@ -2,9 +2,9 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Just Compile" />
-	<File name="startup_NUC122.S" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\i2c.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="8" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2322" topLine="0" />
+			<Cursor1 position="767" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="inc\keymatrix.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="7" zoom_2="0">
@@ -12,9 +12,9 @@
 			<Cursor1 position="676" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\usb_descriptors.h" open="1" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="8" zoom_2="0">
+	<File name="inc\timer.h" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="13" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="7799" topLine="0" />
+			<Cursor1 position="812" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="main.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="8" zoom_2="0">
@@ -22,14 +22,14 @@
 			<Cursor1 position="328" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\nvic.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="9" zoom_2="0">
+	<File name="startup_NUC122.S" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="630" topLine="0" />
+			<Cursor1 position="2322" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\timer.h" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="13" zoom_2="0">
+	<File name="inc\usb_descriptors.h" open="1" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="8" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="812" topLine="0" />
+			<Cursor1 position="7552" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="inc\uart.h" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="15" zoom_2="0">
@@ -37,14 +37,14 @@
 			<Cursor1 position="206" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\custom.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="4" zoom_2="0">
+	<File name="inc\usb.h" open="1" top="1" tabpos="10" split="0" active="1" splitpos="0" zoom_1="6" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4710" topLine="0" />
+			<Cursor1 position="6047" topLine="144" />
 		</Cursor>
 	</File>
-	<File name="inc\i2c.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="8" zoom_2="0">
+	<File name="inc\nvic.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="9" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="767" topLine="0" />
+			<Cursor1 position="630" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="inc\backlight.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="7" zoom_2="0">
@@ -57,9 +57,9 @@
 			<Cursor1 position="827" topLine="9" />
 		</Cursor>
 	</File>
-	<File name="inc\usb.h" open="1" top="1" tabpos="10" split="0" active="1" splitpos="0" zoom_1="6" zoom_2="0">
+	<File name="inc\custom.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="4" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2074" topLine="156" />
+			<Cursor1 position="4710" topLine="0" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>

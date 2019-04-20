@@ -157,6 +157,19 @@ static __inline void USB_setAddress(uint32_t addr){
     USB_FADDR=0x000007f&addr;
 }
 
+enum {  USBDeviceStateDefault, //Mode after reset
+        USBDeviceStateAddress, //Moder after receiving address by host
+        USBDeviceStateConfigured, //Moder after SetConfiguration, must reset all states and Data0 as next send
+        USBDeviceStateSuspended
+};
+uint32_t deviceState=USBDeviceStateDefault;
+
+uint32_t wakeupHostEnabeled=1;
+
+void USBsetStall(){
+
+}
+
 void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
     //Read EPSTS (USB_EPSTS[31:8])+EPEVT7~0 (USB_INTSTS[23:16]) to find out state and endpoint
     //(?) read USB_ATTR to aknowledge bus events
@@ -178,20 +191,39 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         data[1]=0;
                         USB_sendEndpoint(0,&data,2);
                     }else if((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){ //host wants to clear a device feature
-                        if()
-                    }else if((usbSRAM[1]==0x03)&&(!(usbSRAM[0]&0x80))){ //host wants to set a device feature
+                        if((deviceState==USBDeviceStateAddress||deviceState==USBDeviceStateConfigured)
+                        if(usbSTAM[2]==0x01){//Clear Endpoint Halt feature
 
+                        }else if(usbSRAM[2]=0x00){//Clear Device can wakeup host
+                            wakeupHostEnabeled=0;
+                        }
+                    }else if((usbSRAM[1]==0x03)&&(!(usbSRAM[0]&0x80))){ //host wants to set a device feature
+                        if(usbSTAM[2]==0x01){//set Endpoint Halt feature
+
+                        }else if(usbSRAM[2]=0x00){//set Device can wakeup host
+                            wakeupHostEnabeled=1;
+                        }
                     }else if((usbSRAM[1]==0x05)&&(!(usbSRAM[0]&0x80))){ //host wants to set the devices address
                         uint32_t address=0;
                         address=usbSRAM[2]+usbSRAM[3]<<8;
                         USB_setAddress(address);
-                    }else if((usbSRAM[1]==0x06)&&( (usbSRAM[0]&0x80))){ //device should return device descriptor
+                        deviceState=USBDeviceStateAddress;
+                    }else if((usbSRAM[1]==0x06)&&( (usbSRAM[0]&0x80))){ //device should return a descriptor (string,configuration,device, (NOT endpoint or Interface))
+                        if()//Look at value of wIntex to find out which decriptor to return
+                            ==0x01 //Device Descriptor
+                            ==0x02 //Configuration Descriptor
+                            ==0x03 //String Descriptor
+                            ==0x04
                         USB_sendEndpoint(0,USB_DEVICE_Descriptor,USB_DEVICE_Descriptor[0]);
                     }else if((usbSRAM[1]==0x07)&&(!(usbSRAM[0]&0x80))){ //host wants to set a device descriptor
 
-                    }else if((usbSRAM[1]==0x08)&&( (usbSRAM[0]&0x80))){ //device should return configuration descriptor
-
-                    }else if((usbSRAM[1]==0x09)&&(!(usbSRAM[0]&0x80))){ //host wants to set a device configuration descriptor
+                    }else if((usbSRAM[1]==0x08)&&( (usbSRAM[0]&0x80))){ //device should return which configuration is used (bConfigurationValue)
+                        if(deviceState==USBDeviceStateAddress){
+                            //Needs to return zero value
+                        }else if(deviceState==USBDeviceStateConfigured){
+                            send(?USB_CONFIG_Descriptor[5]);//Needs to return non zero bConfigurationValue
+                        }
+                    }else if((usbSRAM[1]==0x09)&&(!(usbSRAM[0]&0x80))){ //host wants to set a device to one of its configurations (bConfigurationValue)
 
                     }else{
                         //ShouldNotHappen
