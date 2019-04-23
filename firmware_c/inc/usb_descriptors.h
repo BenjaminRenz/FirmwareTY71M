@@ -5,7 +5,6 @@ https://www.beyondlogic.org/usbnutshell/usb5.shtml#InterfaceDescriptors
 */
 
 //General Settings
-int32_t USB_D_SELF_POWERED=0;         //(zero or one) if the device is powered by usb (0) or self powered (1)
 int32_t USB_D_REMOVE_WAKEUP=1;        //device can wakeup the sleeping host
 
 #define USB_DD_EP0_packet_size  0x08 //allocated sram for setup packets
@@ -36,7 +35,7 @@ const uint8_t USB_DEVICE_Descriptor[]={ //warning! first byte is least significa
 const uint8_t USB_CONFIG_Descriptor[]={
     0x09,                   //bLength           , 1byte, descriptor size in bytes
     0x02,                   //bDescriptorType   , 1byte, descriptor type (=2 for configuration descriptor)
-    0x??,0x??,              //wTotalLength      , 2byte, length of itself+interface descriptors+endpoints underneath in hirachy
+    0x29,0x00,              //wTotalLength      , 2byte, length of itself+interface descriptors+endpoints underneath in hirachy (2*0x07+3*0x09)
     USB_CD_NUM_IFACES,      //bNumInterfaces    , 1byte,
     0x01,                   //bConfigurationValue, 1byte,
     0x04,                   //iConfiguration    , 1byte, index of string describing this configuration
@@ -56,7 +55,7 @@ const uint8_t USB_INTERFACE_Descriptor1[]={
     0x01,                   //bInterfaceSubClass, 1byte, sub class code of interface (eg. HID: 0x00 for none and 0x01 for boot interface)
     0x01,                   //bInterfaceProtocol, 1byte, protocol code (e.g.: 0x00 none, 0x01 keyboard, 0x02 Mouse)
     0x05                    //iInterface        , 1byte, index of string for Descriptor (can be 0x00 to indicate that there is none)
-}
+};
 //for mouse
 const uint8_t USB_INTERFACE_Descriptor2[]={
     0x09,                   //bLength           , 1byte, descriptor size in bytes
@@ -68,7 +67,7 @@ const uint8_t USB_INTERFACE_Descriptor2[]={
     0x01,                   //bInterfaceSubClass, 1byte, sub class code of interface (eg. HID: 0x00 for none and 0x01 for boot interface)
     0x02,                   //bInterfaceProtocol, 1byte, protocol code (e.g.: 0x00 none, 0x01 keyboard, 0x02 Mouse)
     0x06                    //iInterface        , 1byte, index of string for Descriptor (can be 0x00 to indicate that there is none)
-}
+};
 
 //ENDPOINT DESCRIPTORS
 //for interface 1
@@ -79,7 +78,7 @@ const uint8_t USB_ENDPOINT_Descriptor1[]={
     0x03,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
     USB_SRAM_ENDP_SIZE&0x00FF,(USB_SRAM_ENDP_SIZE&0xff00)>>8,//wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
     USB_EPD_pollingtime     //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
-}
+};
 //for interface 2
 const uint8_t USB_ENDPOINT_Descriptor2[]={
     0x07,                   //bLength           , 1byte, descriptor size in bytes
@@ -88,63 +87,64 @@ const uint8_t USB_ENDPOINT_Descriptor2[]={
     0x03,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
     USB_SRAM_ENDP_SIZE&0x00FF,(USB_SRAM_ENDP_SIZE&0xff00)>>8,//wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
     USB_EPD_pollingtime     //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
-}
+};
 
 //STRING DESCRIPTORS
-//Zeros are needed because strings are expected to be coded in utf16
-/*Used String List
-    !!0x00  Supported Languages String Descriptor
-    0x01    Manufacturer String
-    0x02    Productname String
-    0x03    Serialnumber String
-    0x04    Configuration String
-    0x05    InterfaceKeyboard String
-    0x06    InterfaceMouse String
-*/
+//Zeros are needed because strings are expected to be encoded in utf16
 const uint8_t USB_STRING_Descriptor_0x00[]={
     0x04,                   //bLength           , 1byte, descriptor size in bytes
     0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03) for string descriptor
     0x09,0x04               //wLangId[0]        , 2byte, Supported Language Code 0, (=0x0409 for English US)
-}
+};
 
 const uint8_t USB_STRING_Descriptor_0x01[]={
     0x0C,                   //bLength           , 1byte, descriptor size in bytes
     0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
     'D',0,'r',0,'e',0,'v',0,'o',0
-}
+};
 const uint8_t USB_STRING_Descriptor_0x02[]={
     0x10,                   //bLength           , 1byte, descriptor size in bytes
     0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
     'C',0,'a',0,'l',0,'i',0,'b',0,'u',0,'r',0
-}
+};
 const uint8_t USB_STRING_Descriptor_0x03[]={
     0x08,                   //bLength           , 1byte, descriptor size in bytes
     0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
     '4',0,'2',0,'0',0
-}
+};
 const uint8_t USB_STRING_Descriptor_0x04[]={
     0x08,                   //bLength           , 1byte, descriptor size in bytes
     0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
     '4',0,'2',0,'0',0
-}
+};
 const uint8_t USB_STRING_Descriptor_0x05[]={
     0x12,                   //bLength           , 1byte, descriptor size in bytes
     0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
     'K',0,'e',0,'y',0,'b',0,'o',0,'a',0,'r',0,'d',0
-}
+};
 const uint8_t USB_STRING_Descriptor_0x06[]={
     0x0C,                   //bLength           , 1byte, descriptor size in bytes
     0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
     'M',0,'o',0,'u',0,'s',0,'e',0
-}
-const uint8_t* USB_STRING_DESCRIPTOR_ARRAY[]={
+};
+const uint32_t* USB_STRING_DESCRIPTOR_ARRAY[]={ //TODO check if uint32_t* is working as expected
     USB_STRING_Descriptor_0x00, //Used to let the host know, wich languages are supported
-    USB_STRING_Descriptor_0x01,
-    USB_STRING_Descriptor_0x02,
-    USB_STRING_Descriptor_0x03,
-    USB_STRING_Descriptor_0x04,
-    USB_STRING_Descriptor_0x05,
-    USB_STRING_Descriptor_0x06
-}
+    USB_STRING_Descriptor_0x01, //Manufacturer String
+    USB_STRING_Descriptor_0x02, //Productname String
+    USB_STRING_Descriptor_0x03, //Serialnumber String
+    USB_STRING_Descriptor_0x04, //Configuration String
+    USB_STRING_Descriptor_0x05, //InterfaceKeyboard String
+    USB_STRING_Descriptor_0x06  //InterfaceMouse String
+};
+
+const uint32_t* USB_INTERFACE_DESCRIPTOR_ARRAY[]{
+    USB_INTERFACE_Descriptor1,
+    USB_INTERFACE_Descriptor2
+};
+
+const uint32_t* USB_ENDPOINT_DESCRIPTOR_ARRAY[]{
+    USB_ENDPOINT_Descriptor1,
+    USB_ENDPOINT_Descriptor2
+};
 
 #endif // UDB_DESCRIPTORS_H_INCLUDED

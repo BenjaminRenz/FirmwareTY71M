@@ -80,7 +80,7 @@ void SystemInit(){
     GPIOF_PMD=0x0000001F; //pf2 out matrix,pf3 in powerSRC?
 
     //Begin Reset state of peripheals
-    USB_start_reset();
+    USB_init();
     USART0_start_reset();
     I2C1_start_reset();
 
