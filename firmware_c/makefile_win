@@ -1,5 +1,4 @@
-# Makefile for ty71m firmware
-#test temp TODO REMOVE
+# Makefile for ty71m firmware on windows
 projectpath:=%cd%
 toolchainpath=$(projectpath)\..\gcc-arm\bin
 
