@@ -492,13 +492,16 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
     }else if(USB_INTSTS&USB_INT_BUS_MASK){ //BUS event
         if(USB_ATTR&USB_ATTR_RESUME_MASK){  //Resume from suspend
             USB_enable_controller();
+            USB_enable_phy();
         }else if(USB_ATTR&USB_ATTR_SUSPEND_MASK){ //Cable plugged out/host is sleeping (bus idle for <3mS)
             USB_disable_phy();
         }else if(USB_ATTR&USB_ATTR_TIMEOUT_MASK){ //Host not responding by ACK packets
 
         }else if(USB_ATTR&USB_ATTR_USBRST_MASK){ //Reset from host by se0
             USB_enable_controller();
+            USB_enable_phy();
             //TODO reset controller
+
         }
         //Clear BUS Interrupt
         USB_INTST=USB_INT_BUS_MASK;
