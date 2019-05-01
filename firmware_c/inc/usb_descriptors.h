@@ -10,6 +10,7 @@ int32_t USB_D_REMOVE_WAKEUP=1;        //device can wakeup the sleeping host
 #define USB_DD_EP0_packet_size  0x08 //allocated sram for setup packets
 #define USB_CD_POWER            0xFA //Power consumption of the device in x*2mA (=500mA)
 #define USB_CD_NUM_IFACES       0x02 //how many interface should the device report to the pc (one mouse+one keyboard=2)
+#define USB_DD_NUM_CONFGR       0x01 //how many configurations exists for a device (one for charging battery one for normal operation for example)
 #define USB_EPD_pollingtime     0x0A //poll interval in x*1ms (10ms)=100Hz polling rate
 
 //DEVICE DESCRIPTORS
@@ -28,16 +29,16 @@ const uint8_t USB_DEVICE_Descriptor[]={ //warning! first byte is least significa
     0x01,                   //iManufacturer     , 1byte, index of manufacturer string (0x00 if not existing)
     0x02,                   //iProduct          , 1byte, index of productname sting
     0x03,                   //iSerialNumber     , 1byte, index of serialnum string
-    0x01                    //bNumConfigurations, 1byte, number of configuration Descriptors (e.g. for one bus powered and one self powered device 0x02)
+    USB_DD_NUM_CONFGR       //bNumConfigurations, 1byte, number of configuration Descriptors (e.g. for one bus powered and one self powered device 0x02)
 };
 
 //CONGIFURATION DESCRIPTORS
-const uint8_t USB_CONFIG_Descriptor[]={
+const uint8_t USB_CONFIG_Descriptor1[]={
     0x09,                   //bLength           , 1byte, descriptor size in bytes
     0x02,                   //bDescriptorType   , 1byte, descriptor type (=2 for configuration descriptor)
     0x29,0x00,              //wTotalLength      , 2byte, length of itself+interface descriptors+endpoints underneath in hirachy (2*0x07+3*0x09)
     USB_CD_NUM_IFACES,      //bNumInterfaces    , 1byte,
-    0x01,                   //bConfigurationValue, 1byte,
+    0x01,                   //bConfigurationValue, 1byte,   ??value with which this config descriptor is referenced when having multiple
     0x04,                   //iConfiguration    , 1byte, index of string describing this configuration
     0xA0,                   //bmAttributes      , 1byte, Bitconfig, D7=1, D6 Self Powered, D5 Remote Wkup, rest=0
     USB_CD_POWER            //bMaxPower         , 1byte, max power consumption in x*2mA
@@ -127,7 +128,7 @@ const uint8_t USB_STRING_Descriptor_0x06[]={
     0x03,                   //bDescriptorType   , 1byte, descriptor type (=0x03 for string descriptor)
     'M',0,'o',0,'u',0,'s',0,'e',0
 };
-const uint32_t* USB_STRING_DESCRIPTOR_ARRAY[]={ //TODO check if uint32_t* is working as expected
+const uint8_t* USB_STRING_DESCRIPTOR_ARRAY[]={ //TODO check if uint32_t* is working as expected
     USB_STRING_Descriptor_0x00, //Used to let the host know, wich languages are supported
     USB_STRING_Descriptor_0x01, //Manufacturer String
     USB_STRING_Descriptor_0x02, //Productname String
@@ -137,12 +138,16 @@ const uint32_t* USB_STRING_DESCRIPTOR_ARRAY[]={ //TODO check if uint32_t* is wor
     USB_STRING_Descriptor_0x06  //InterfaceMouse String
 };
 
-const uint32_t* USB_INTERFACE_DESCRIPTOR_ARRAY[]{
+const uint8_t* USB_CONFIGURATION_DESCRIPTOR_ARRAY[USB_DD_NUM_CONFGR]{
+    USB_CONFIG_Descriptor1;
+};
+
+const uint8_t* USB_INTERFACE_DESCRIPTOR_ARRAY[USB_CD_NUM_IFACES]{
     USB_INTERFACE_Descriptor1,
     USB_INTERFACE_Descriptor2
 };
 
-const uint32_t* USB_ENDPOINT_DESCRIPTOR_ARRAY[]{
+const uint8_t* USB_ENDPOINT_DESCRIPTOR_ARRAY[]{
     USB_ENDPOINT_Descriptor1,
     USB_ENDPOINT_Descriptor2
 };
