@@ -110,4 +110,6 @@ int main(void){
         setRGB(keys);
         getPressedKeys(keys);
     }
+    //For send keys we need to send modifier as keys if no other key is pressed, so our pc can register them without any other keys
+
 }

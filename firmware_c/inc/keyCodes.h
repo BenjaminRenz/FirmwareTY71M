@@ -119,15 +119,23 @@
 #define KEY_KEYPAD1         0x70
 #define KEY_KEYPAD1
 
-#define KEY_MOD_LEFTCTRL    0xE0
-#define KEY_MOD_LEFTSHIFT   0xE1
-#define KEY_MOD_LEFTALT     0xE2
-#define KEY_MOD_LEFTOS      0xE3
-#define KEY_MOD_RIGHTCTRL   0xE4
-#define KEY_MOD_RIGHTSHIFT  0xE5
-#define KEY_MOD_RIGHTALT    0xE6
-#define KEY_MOD_RIGHTOS     0xE7
+#define KEY_MOD_LEFTCTRL    0x01
+#define KEY_MOD_LEFTSHIFT   0x02
+#define KEY_MOD_LEFTALT     0x04
+#define KEY_MOD_LEFTOS      0x08
+#define KEY_MOD_RIGHTCTRL   0x10
+#define KEY_MOD_RIGHTSHIFT  0x20
+#define KEY_MOD_RIGHTALT    0x40
+#define KEY_MOD_RIGHTOS     0x80
 
+#define KEY_LEFTCTRL        0xe0
+#define KEY_LEFTSHIFT       0xe1
+#define KEY_LEFTALT         0xe2
+#define KEY_LEFTOS          0xe3
+#define KEY_RIGHTCTRL       0xe4
+#define KEY_RIGHTSHIFT      0xe5
+#define KEY_RIGHTALT        0xe6
+#define KEY_RIGHTOS         0xe7
 //Those are not supported by unix or bios
 /*
 #define KEY_F13             0x68

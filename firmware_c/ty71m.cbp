@@ -64,6 +64,7 @@
 		</Unit>
 		<Unit filename="inc/backlight.h" />
 		<Unit filename="inc/custom.h" />
+		<Unit filename="inc/hid_descriptor.h" />
 		<Unit filename="inc/i2c.h" />
 		<Unit filename="inc/keyCodes.h" />
 		<Unit filename="inc/keymatrix.h" />
