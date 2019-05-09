@@ -139,7 +139,7 @@ const uint8_t* USB_STRING_DESCRIPTOR_ARRAY[]={ //TODO check if uint32_t* is work
     USB_STRING_Descriptor_0x06  //InterfaceMouse String
 };
 
-uint8_t* USB_CONFIGURATION_DESCRIPTOR_ARRAY[USB_DD_NUM_CONFGR]={
+const uint8_t* USB_CONFIGURATION_DESCRIPTOR_ARRAY[USB_DD_NUM_CONFGR]={
     USB_CONFIG_Descriptor1
 };
 

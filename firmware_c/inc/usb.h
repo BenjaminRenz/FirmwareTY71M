@@ -22,7 +22,7 @@ https://proyectosfie.webcindario.com/usb/libro/capitulo11.pdf   //Info on hid
 */
 enum{EP_IN=0b10, EP_OUT=0b01, EP_DISABELED=0b00}; //EP_STATE
 enum{EP_IS_ISOCHR=1,EP_NOT_ISOCHR=0}; //EP_ISOCH
-typedef struct USB_EP_CONFIG={
+typedef struct USB_EP_CONFIG{
     uint32_t EP_STATE :2;
     uint32_t EP_ADDR :4;
     uint32_t EP_ISOCH :1;
@@ -40,10 +40,33 @@ USB_EP_CONFIG EP1_CFG={
     .EP_ADDR=0,
     .EP_ISOCH=EP_NOT_ISOCHR
 };
-USB_EP_CONFIG EP_CONFIG_ARRAY[8]={
-    EP0_CFG,EP1_CFG,EP2_CFG,EP3_CFG,
-    EP4_CFG,EP5_CFG,EP5_CFG,EP7_CFG,
+USB_EP_CONFIG EP2_CFG={
+    .EP_STATE=EP_IN,
+    .EP_ADDR=1,
+    .EP_ISOCH=EP_NOT_ISOCHR
 };
+USB_EP_CONFIG EP3_CFG={
+    .EP_STATE=EP_IN,
+    .EP_ADDR=2,
+    .EP_ISOCH=EP_NOT_ISOCHR
+};
+USB_EP_CONFIG EP4_CFG={
+    .EP_STATE=EP_DISABELED,
+};
+USB_EP_CONFIG EP5_CFG={
+    .EP_STATE=EP_DISABELED,
+};
+USB_EP_CONFIG EP6_CFG={
+    .EP_STATE=EP_DISABELED,
+};
+USB_EP_CONFIG EP7_CFG={
+    .EP_STATE=EP_DISABELED,
+};
+
+USB_EP_CONFIG EP_CONFIG_ARRAY[8];
+uint8_t USB_CTRL_IN=0;
+uint8_t USB_CTRL_OUT=0;
+uint8_t USB_NUM_OF_DEFINED_ENDP=0;
 //BEGIN USER SETTINGS
 #define USB_SRAM_SETUP_SIZE 0x08
 #define USB_SRAM_ENDP_SIZE  0x40
@@ -92,8 +115,8 @@ static __inline void USB_EP_TO_DATAn(uint32_t ep,uint32_t n){
 #define USB_clear_ep_stall_bit(epnum)  (USB_CFGP(epnum)&=0xfffffffd)
 #define USB_get_ep_stall_bit(epnum)    ((USB_CFGP(epnum)&0x00000002)>>1)
 static __inline void USB_set_ctrl_stall(){ //if error indicate that to the host
-    USB_set_ep_stall_bit(USB_CTRL_EP_IN);
-    USB_set_ep_stall_bit(USB_CTRL_EP_OUT);
+    USB_set_ep_stall_bit(USB_CTRL_OUT);
+    USB_set_ep_stall_bit(USB_CTRL_IN);
 }
 
 #define USB_stop_transOrRec(epnum) USB_CFGP(epnum)|=0x00000001//clear in/out ready flag after already written USB_MAXPLD
@@ -150,13 +173,35 @@ static __inline void USB_disable_host_wakeup(void){
 void USB_init(){
     USB_start_reset();
     USB_INTEN=0x00000000;
-    //Segment the Endpoint Buffers and setup the endpoints
+    EP_CONFIG_ARRAY[0]=EP0_CFG;
+    EP_CONFIG_ARRAY[1]=EP1_CFG;
+    EP_CONFIG_ARRAY[2]=EP2_CFG;
+    EP_CONFIG_ARRAY[3]=EP3_CFG;
+    EP_CONFIG_ARRAY[4]=EP4_CFG;
+    EP_CONFIG_ARRAY[5]=EP5_CFG;
+    EP_CONFIG_ARRAY[6]=EP6_CFG;
+    EP_CONFIG_ARRAY[7]=EP7_CFG;
+
     //USB_BUFFSEG for the setup buffer is already set to 0x00000000 on reset indicating no offset for setup storage space
     for(uint32_t epnum;epnum<(sizeof(EP_CONFIG_ARRAY)/sizeof(EP_CONFIG_ARRAY[0]));epnum++){
-    USB_EP_CONFIG  EP_CFG=EP_CONFIG_ARRAY[epnum];
-    USB_BUFFSEG(epnum)=USB_SRAM_SETUP_SIZE+epnum*USB_SRAM_ENDP_SIZE;
-    uint32_t oldCFGval=USB_CFG(epnum)&0x00000380;   
-        USB_CFG(ep)=oldCFGval+(0x20<<EP_CFG.EP_IN_OR_OUT)+(EP_CFG.EP_IS_ISOCHR<<0x10)+EP_CFG.EP_ADDR;
+        //Segment the Endpoint Buffers and setup the endpoints
+        USB_EP_CONFIG EP_CFG=EP_CONFIG_ARRAY[epnum];
+        USB_BUFFSEG(epnum)=USB_SRAM_SETUP_SIZE+epnum*USB_SRAM_ENDP_SIZE;
+        uint32_t oldCFGval=USB_CFG(epnum)&0x00000380;
+        USB_CFG(epnum)=oldCFGval+(EP_CFG.EP_STATE<<5)+(EP_CFG.EP_ISOCH<<0x10)+EP_CFG.EP_ADDR;
+        //Check which ones are the ctrl endpoints and remember index
+
+        if(EP_CFG.EP_STATE==EP_IN){
+            USB_NUM_OF_DEFINED_ENDP++;
+            if(EP_CFG.EP_ADDR==0){
+                USB_CTRL_IN=epnum;
+            }
+        }else if(EP_CFG.EP_STATE==EP_OUT){
+            USB_NUM_OF_DEFINED_ENDP++;
+            if(EP_CFG.EP_ADDR==0){
+                USB_CTRL_OUT=epnum;
+            }
+        }
     }
     USB_enable_controller(); //TODO find out when to do this...
     USB_end_reset();
@@ -175,9 +220,8 @@ void USB_PrepareToSendEp(uint32_t epnum, uint8_t* data, uint32_t packetLength){
                 USB_SRAM_EP_ADDR(epnum)[i]=data[i];
             }
             USB_MAXPLD(epnum)=USB_SRAM_ENDP_SIZE;
-           EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=data+USB_SRAM_ENDP_SIZE;
+            EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=data+USB_SRAM_ENDP_SIZE;
             EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=packetLength-USB_SRAM_ENDP_SIZE;
-
         }else{ //can be handeled in one transfer
             for(uint32_t i=0;i<packetLength;i++){
                 USB_SRAM_EP_ADDR(epnum)[i]=data[i];
@@ -191,15 +235,15 @@ void USB_PrepareToSendEp(uint32_t epnum, uint8_t* data, uint32_t packetLength){
 
 static __inline void USB_PrepareToSendEpAfterSetup(uint32_t epnum, uint8_t* data, uint32_t packetLength){
     //first data packet after setup stage must be data1
-    USB_EP_TO_DATAn(USB_CTRL_EP_IN,1);
-    if(!Multistage_BytesLeft_EP[epnum]){ //check if endpoint is busy
+    USB_EP_TO_DATAn(USB_CTRL_IN,1);
+    if(!EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //check if endpoint is busy
         if(packetLength>USB_SRAM_ENDP_SIZE){ //Do we have to split it into multistage transfers?
             for(uint32_t i=0;i<USB_SRAM_ENDP_SIZE;i++){
                 USB_SRAM_EP_ADDR(epnum)[i]=data[i];
             }
             USB_MAXPLD(epnum)=USB_SRAM_ENDP_SIZE;
-            Multistage_Storage_EP[epnum]=data+USB_SRAM_ENDP_SIZE;
-            Multistage_BytesLeft_EP[epnum]=packetLength-USB_SRAM_ENDP_SIZE;
+            EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=data+USB_SRAM_ENDP_SIZE;
+            EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=packetLength-USB_SRAM_ENDP_SIZE;
 
         }else{ //can be handeled in one transfer
             for(uint32_t i=0;i<packetLength;i++){
@@ -213,16 +257,16 @@ static __inline void USB_PrepareToSendEpAfterSetup(uint32_t epnum, uint8_t* data
 }
 
 static __inline void USB_PrepareToRecieveEp(uint32_t epnum,uint8_t* storedest,uint32_t packetLength){
-    if(!Multistage_BytesLeft_EP[epnum]){ //Are we already waiting for some bytes on this ep?
+    if(!EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //Are we already waiting for some bytes on this ep?
         if(packetLength>USB_SRAM_ENDP_SIZE){ //Do we have to split it into multistage transfers?
             USB_MAXPLD(epnum)=USB_SRAM_ENDP_SIZE;
-            Multistage_Storage_EP[epnum]=storedest+USB_SRAM_ENDP_SIZE;
-            Multistage_BytesLeft_EP[epnum]=packetLength-USB_SRAM_ENDP_SIZE;
+            EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=storedest+USB_SRAM_ENDP_SIZE;
+            EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=packetLength-USB_SRAM_ENDP_SIZE;
 
         }else{ //can be handeled in one transfer
             USB_MAXPLD(epnum)=packetLength;
-            Multistage_BytesLeft_EP[epnum]=packetLength;
-            Multistage_Storage_EP[epnum]=storedest;
+            EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=packetLength;
+            EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=storedest;
         }
     }else{
         //TODO ERROR
@@ -236,7 +280,7 @@ enum {  USBDeviceStateDefault, //Mode after reset
         USBDeviceStateSuspended
 };
 
-#define USB_NUM_OF_DEFINED_HID
+#define USB_NUM_OF_DEFINED_HID 1 //TODO change to 2?
 uint32_t USB_HID_PROTOCOL[USB_NUM_OF_DEFINED_HID]={0};
 void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
     static uint32_t deviceState=USBDeviceStateDefault;
@@ -262,15 +306,15 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         uint8_t selfPowered=((USB_CONFIG_Descriptor1[8]&0x40)>>6);
                         uint8_t data[2]={(USB_D_REMOTE_WAKEUP<<1)+selfPowered,0x00};
                         //Status Stage (prepare beforehand) which confirms reception
-                        USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
+                        USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                         //Data Stage:
-                        USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data));
+                        USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
 
                     }else if((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){                     //host wants to clear a device feature
                         if((deviceState==USBDeviceStateConfigured)&&(deviceState==USBDeviceStateAddress)&&(usbSRAM[2]==0x01)){ //clear DEVICE_REMOTE_WAKEUP
                             wakeupHostEnabeled=0;
                             //Status Stage
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,0,0); //send zero length packet to confirm reception
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,0,0); //send zero length packet to confirm reception
                         }else{  //unsupported for device
                             USB_set_ctrl_stall();
                         }
@@ -282,7 +326,7 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             USB_set_ctrl_stall();
                         }
                         //Status Stage:
-                        USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,0,0); //send zero length packet to confirm reception
+                        USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,0,0); //send zero length packet to confirm reception
 
                     }else if((usbSRAM[1]==0x05)&&(!(usbSRAM[0]&0x80))){                     //host wants to set the devices address
                         uint32_t address=usbSRAM[2]+(usbSRAM[3]<<8);
@@ -298,26 +342,26 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                                 }
                             }
                             //Status stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,0,0); //send zero length packet to confirm reception
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,0,0); //send zero length packet to confirm reception
                         }
 
                     }else if((usbSRAM[1]==0x06)&&( (usbSRAM[0]&0x80))){                     //device should return a descriptor (string,configuration,device, (NOT endpoint or Interface))
                         //Request is valid in all states of deviceState
                         //Status Stage (prepare beforehand) which confirms reception
-                        USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
+                        USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                         if(usbSRAM[3]==0x01){//type of decriptor to return (device descriptor)
                             //Status Stage:
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0);
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0);
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,USB_DEVICE_Descriptor,USB_DEVICE_Descriptor[0]);
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_DEVICE_Descriptor,USB_DEVICE_Descriptor[0]);
                         }else if(usbSRAM[3]==0x02){ //type of decriptor to return (configuration descriptor)
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,USB_CONFIGURATION_DESCRIPTOR_ARRAY[usbSRAM[2]],USB_CONFIGURATION_DESCRIPTOR_ARRAY[usbSRAM[2]][0]);
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_CONFIGURATION_DESCRIPTOR_ARRAY[usbSRAM[2]],USB_CONFIGURATION_DESCRIPTOR_ARRAY[usbSRAM[2]][0]);
                         }else if(usbSRAM[3]==0x03){ //type of decriptor to return (string descriptor)ion by host after Data stage
                             //Data Stage:
                             //TODO check if Language id matches and select accordingly            if(usbSRAM[4]==0x09&&usbSRAM[5]==0x04){
                             //Select the string descriptor based on the index (warning index is 0 indexed)
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,USB_STRING_DESCRIPTOR_ARRAY[usbSRAM[2]],USB_STRING_DESCRIPTOR_ARRAY[usbSRAM[2]][0]);
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_STRING_DESCRIPTOR_ARRAY[usbSRAM[2]],USB_STRING_DESCRIPTOR_ARRAY[usbSRAM[2]][0]);
                         }else{
                             //error: All other descriptor types are not allowed to accessed
                             USB_set_ctrl_stall();
@@ -330,15 +374,15 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         if(deviceState==USBDeviceStateAddress){
                             uint8_t data[1]={0x00};
                             //prepare Status Stage
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0);
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0);
                             //Data Stage
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data)); //Needs to return zero value if not configured
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data)); //Needs to return zero value if not configured
                         }else if(deviceState==USBDeviceStateConfigured){
                             uint8_t data[1]={USB_CONFIG_Descriptor1[5]};
                             //prepare Status Stage
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0);
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0);
                             //Data Stage
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data)); //Needs to return configdesc value
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data)); //Needs to return configdesc value
 
                         }else{
                             USB_set_ctrl_stall();//error: device was not configured (undefined behavior)
@@ -353,14 +397,14 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                                     //TODO call user function to notify on configuration change
                                     deviceState=USBDeviceStateConfigured;
                                     //Status Stage
-                                    USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                    USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                                 }else{
                                     USB_set_ctrl_stall(); //host tries to select nonexistent configuration, abort
                                 }
                             }else{
                                 deviceState=USBDeviceStateAddress;
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }
                         }
 
@@ -381,9 +425,9 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         }else{
                             uint8_t data[2]={0x00,0x00}; //Interface status is always 0x0000
                             //Status Stage (prepare beforehand) which confirms reception
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data));
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
                         }
 
                     }else if((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){ //host wants to clear a interface feature
@@ -414,53 +458,53 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                     if      ((usbSRAM[1]==0x00)&&( (usbSRAM[0]&0x80))){ //endpoint should send status to host
                         if      (usbSRAM[4]==0x10){//CRTL_IN
                             //Type Control Read (Setup->DataIn->StatusOut)
-                            uint8_t data[1]={USB_get_ep_stall_bit(USB_CTRL_EP_IN)};
+                            uint8_t data[1]={USB_get_ep_stall_bit(USB_CTRL_IN)};
                             //Status Stage (prepare beforehand) which confirms reception
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data));
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
                         }else if(usbSRAM[4]==0x00){//CTRL_OUT
                             //Type Control Read (Setup->DataIn->StatusOut)
-                            uint8_t data[1]={USB_ep_get_stall_bit(USB_CTRL_EP_OUT)};
+                            uint8_t data[1]={USB_get_ep_stall_bit(USB_CTRL_OUT)};
                             //Status Stage (prepare beforehand) which confirms reception
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data));
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
                         }else if(usbSRAM[4]==0x11){//KEYBOARD IN
                             //Type Control Read (Setup->DataIn->StatusOut)
-                            uint8_t data[1]={USB_ep_get_stall_bit(2)};
+                            uint8_t data[1]={USB_get_ep_stall_bit(2)};
                             //Status Stage (prepare beforehand) which confirms reception
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data));
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
                         }else if(usbSRAM[4]==0x12){//MOUSE IN
                             //Type Control Read (Setup->DataIn->StatusOut)
-                            uint8_t data[1]={USB_ep_get_stall_bit(3)};
+                            uint8_t data[1]={USB_get_ep_stall_bit(3)};
                             //Status Stage (prepare beforehand) which confirms reception
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data));
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
                         }else{
-                            USB_set_stall();
+                            USB_set_ctrl_stall();
                         }
                     }else if((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){ //host wants to clear a endpoint feature
                         if(usbSRAM[2]==0x00){ //Endpoint halt
                             if(usbSRAM[4]==0x10){ //CTRL_IN
-                                USB_clear_ep_stall_bit(USB_CTRL_EP_IN);
+                                USB_clear_ep_stall_bit(USB_CTRL_IN);
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }else if(usbSRAM[4]==0x00){ //CTRL_OUT
-                                USB_clear_ep_stall_bit(USB_CTRL_EP_OUT);
+                                USB_clear_ep_stall_bit(USB_CTRL_OUT);
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }else if(usbSRAM[4]==0x11){//KEYBOARD IN
                                 USB_clear_ep_stall_bit(2);
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }else if(usbSRAM[4]==0x12){//KEYBOARD IN
                                 USB_clear_ep_stall_bit(3);
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }else{
                                 USB_set_ctrl_stall();
                             }
@@ -471,21 +515,21 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                     }else if((usbSRAM[1]==0x03)&&(!(usbSRAM[0]&0x80))){ //host wants to set a endpoint feature
                         if(usbSRAM[2]==0x00){
                             if(usbSRAM[4]==0x10){ //CTRL_IN
-                                USB_set_ep_stall_bit(USB_CTRL_EP_IN);
+                                USB_set_ep_stall_bit(USB_CTRL_IN);
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }else if(usbSRAM[4]==0x00){ //CTRL_OUT
-                                USB_set_ep_stall_bit(USB_CTRL_EP_OUT);
+                                USB_set_ep_stall_bit(USB_CTRL_OUT);
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }else if(usbSRAM[4]==0x11){//KEYBOARD IN
                                 USB_set_ep_stall_bit(2);
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }else if(usbSRAM[4]==0x12){//KEYBOARD IN
                                 USB_set_ep_stall_bit(3);
                                 //Status Stage
-                                USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                                USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                             }else{
                                 USB_set_ctrl_stall();
                             }
@@ -494,94 +538,93 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         }
 
                     }else{
-                        USB_set_stall(); //Error not supported
+                        USB_set_ctrl_stall(); //Error not supported
 
                     }
                 }else{
-                    USB_set_stall(); //Error not supported
+                    USB_set_ctrl_stall(); //Error not supported
 
                 }
             }else if((usbSRAM[0]&0x60)==0x20){ //Class request (defined by USB class in use eg. HID)
                 //Set Selector Unit Control
                 //Get Report
 
-                if      (usbSRAM[1]==0x01&&(!(usbSRAM[0]&0x80))){ //Host wants the device to send a hid report descriptor
+                if      ((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){ //Host wants the device to send a hid report descriptor
 
                     //TODO if(usbSRAM[])
-                }else if(usbSRAM[1]==0x03&&(!(usbSRAM[0]&0x80))){ //Get Protocol
+                }else if((usbSRAM[1]==0x03)&&(!(usbSRAM[0]&0x80))){ //Get Protocol
                     for(uint32_t i=0;i<USB_NUM_OF_DEFINED_HID;i++){
                         if(usbSRAM[4]<=USB_NUM_OF_DEFINED_HID){
                             uint8_t data[1]={USB_HID_PROTOCOL[i]};
                             //Status Stage (prepare beforehand) which confirms reception
-                            USB_PrepareToRecieveEp(USB_CTRL_EP_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
+                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,data,sizeof(data));
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
                         }
                     }
-                }else if(usbSRAM[1]==0x0a&&(!(usbSRAM[0]&0x80))){ //Set Idle
+                }else if((usbSRAM[1]==0x0a)&&(!(usbSRAM[0]&0x80))){ //Set Idle
 
-                }else if(usbSRAM[1]==0x0b&&(!(usbSRAM[0]&0x80))){ //Set Protocol
+                }else if((usbSRAM[1]==0x0b)&&(!(usbSRAM[0]&0x80))){ //Set Protocol
                     for(uint32_t i=0;i<USB_NUM_OF_DEFINED_HID;i++){
                         if(usbSRAM[4]<=USB_NUM_OF_DEFINED_HID){
                             USB_HID_PROTOCOL[i]=usbSRAM[2];
                             //Status Stage
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_EP_IN,NULL,0);
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                         }
                     }
-                }else if(usbSRAM[1]==0x0A&&(!(usbSRAM[0]&0x80))){ //Get Report
+                }else if((usbSRAM[1]==0x0A)&&(!(usbSRAM[0]&0x80))){ //Get Report
 
                 }else{
                     USB_set_ctrl_stall(); //Should not happen
                 }
-            }else if(usbSRAM[0]&0x60==0x40){ //Vendor Request (defined by USER/VENDOR)
+            }else if((usbSRAM[0]&0x60)==0x40){ //Vendor Request (defined by USER/VENDOR)
                 USB_set_ctrl_stall(); //Should not happen
             }
 
             //Clear Interrupt
-            USB_INTST=USB_INT_SETUP_MASK;
+            USB_INTSTS=USB_INT_SETUP_MASK;
         } //if INT_SETUP_MASK end
-        #if defined USB_EP0_IN || define USB_EP0_OUT //check if ep0 is defined
         else{ //matches to all ep interrupts
             for(uint32_t epnum=0;epnum<USB_NUM_OF_DEFINED_ENDP;epnum++){
                 if(USB_INTSTS&USB_INT_EP_MASK(epnum)){
-                    USB_INTST=USB_INT_EP_MASK(epnum);//Clear this interrupt flag
-                    if(epInOrOut[epnum]==EP_IN){ //From device to host
-                        if(Multistage_BytesLeft_EP[epnum]){ //We still have to transmit data
-                            if(Multistage_BytesLeft_EP[epnum]>USB_SRAM_ENDP_SIZE){ //will be at least one additional transfer
+                    USB_INTSTS=USB_INT_EP_MASK(epnum);//Clear this interrupt flag
+                    if(EP_CONFIG_ARRAY[epnum].EP_STATE==EP_IN){ //From device to host
+                        if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //We still have to transmit data
+                            if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left>USB_SRAM_ENDP_SIZE){ //will be at least one additional transfer
                                 for(uint32_t i=0;i<USB_SRAM_ENDP_SIZE;i++){
-                                    USB_SRAM_EP_ADDR(epnum)[i]=Multistage_Storage_EP[epnum][i];
+                                    USB_SRAM_EP_ADDR(epnum)[i]=EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr[i];
                                 }
-                                USB_MAXPLD_ADDR(ep)=USB_SRAM_ENDP_SIZE;
-                                Multistage_Storage_EP[epnum]+=USB_SRAM_ENDP_SIZE;
-                                Multistage_BytesLeft_EP[epnum]-=USB_SRAM_ENDP_SIZE;
+                                USB_MAXPLD(epnum)=USB_SRAM_ENDP_SIZE;
+                                EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr+=USB_SRAM_ENDP_SIZE;
+                                EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left-=USB_SRAM_ENDP_SIZE;
                             }else{
-                                for(uint32_t i=0;i<Multistage_BytesLeft_EP[epnum];i++){
-                                    USB_SRAM_EP_ADDR(epnum)[i]=Multistage_Storage_EP[epnum][i];
+                                for(uint32_t i=0;i<EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left;i++){
+                                    USB_SRAM_EP_ADDR(epnum)[i]=EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr[i];
                                 }
-                                USB_MAXPLD_ADDR(ep)=USB_SRAM_ENDP_SIZE;
-                                Multistage_Storage_EP[epnum]=NULL;
-                                Multistage_BytesLeft_EP[epnum]=0;
+                                USB_MAXPLD(epnum)=USB_SRAM_ENDP_SIZE;
+                                EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=NULL;
+                                EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=0;
                             }
                         }else{ //Host wants data but we don't have requested him to ask for any
                             USB_set_ctrl_stall();
                         }
-                    }else{                      //From host to device
-                        if(Multistage_BytesLeft_EP[epnum]){ //We still have to recieve data
-                            uint32_t dataInBuffer=USB_MAXPLD_ADDR(ep);
+                    }else if(EP_CONFIG_ARRAY[epnum].EP_STATE==EP_OUT){                      //From host to device
+                        if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //We still have to recieve data
+                            uint32_t dataInBuffer=USB_MAXPLD(epnum);
                             for(uint32_t i=0;i<dataInBuffer;i++){
-                                Multistage_Storage_EP[epnum][i]=USB_SRAM_EP_ADDR(epnum)[i];
+                                EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr[i]=USB_SRAM_EP_ADDR(epnum)[i];
                             }
-                            if(Multistage_BytesLeft_EP[epnum]>USB_SRAM_ENDP_SIZE){ //we expect another transfer
+                            if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left>USB_SRAM_ENDP_SIZE){ //we expect another transfer
                                 if(dataInBuffer==USB_SRAM_ENDP_SIZE){
-                                    Multistage_BytesLeft_EP[epnum]-=dataInBuffer;
-                                    Multistage_Storage_EP[epnum]+=USB_SRAM_ENDP_SIZE;
+                                    EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left-=dataInBuffer;
+                                    EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr+=USB_SRAM_ENDP_SIZE;
                                 }else{ //host did not send us enough or to much data
                                     USB_set_ctrl_stall();
                                 }
                             }else{
-                                if(dataInBuffer==Multistage_BytesLeft_EP[epnum]){ //we got as many bytes as we expected
-                                    Multistage_BytesLeft_EP[epnum]=0;
-                                    Multistage_Storage_EP[epnum]=NULL,
+                                if(dataInBuffer==EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //we got as many bytes as we expected
+                                    EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=0;
+                                    EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=NULL;
                                 }else{//host did not send us enough or to much data
                                     USB_set_ctrl_stall();
                                 }
@@ -608,7 +651,7 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
 
         }
         //Clear BUS Interrupt
-        USB_INTST=USB_INT_BUS_MASK;
+        USB_INTSTS=USB_INT_BUS_MASK;
 
     }else if(USB_INTSTS&USB_INT_FLDET_MASK){ //Called when connecting/disconnecting usb cable
         if(USB_is_attached){
