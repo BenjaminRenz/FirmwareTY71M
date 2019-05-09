@@ -20,40 +20,41 @@ https://www.beyondlogic.org/usbnutshell/usb6.shtml#GetDescriptor
 http://sdphca.ucsd.edu/lab_equip_manuals/usb_20.pdf
 https://proyectosfie.webcindario.com/usb/libro/capitulo11.pdf   //Info on hid
 */
+enum{EP_IN=0b10, EP_OUT=0b01, EP_DISABELED=0b00}; //EP_STATE
+enum{EP_IS_ISOCHR=1,EP_NOT_ISOCHR=0}; //EP_ISOCH
+typedef struct USB_EP_CONFIG={
+    uint32_t EP_STATE :2;
+    uint32_t EP_ADDR :4;
+    uint32_t EP_ISOCH :1;
+    uint32_t MultiStage_Bytes_left;
+    uint8_t* MultiStage_Storage_ptr;
+} USB_EP_CONFIG;
 
-enum {EP_IN, EP_OUT};
+USB_EP_CONFIG EP0_CFG={
+    .EP_STATE=EP_IN,
+    .EP_ADDR=0,
+    .EP_ISOCH=EP_NOT_ISOCHR
+};
+USB_EP_CONFIG EP1_CFG={
+    .EP_STATE=EP_OUT,
+    .EP_ADDR=0,
+    .EP_ISOCH=EP_NOT_ISOCHR
+};
+USB_EP_CONFIG EP_CONFIG_ARRAY[8]={
+    EP0_CFG,EP1_CFG,EP2_CFG,EP3_CFG,
+    EP4_CFG,EP5_CFG,EP5_CFG,EP7_CFG,
+};
 //BEGIN USER SETTINGS
 #define USB_SRAM_SETUP_SIZE 0x08
 #define USB_SRAM_ENDP_SIZE  0x40
-#define USB_NUM_OF_DEFINED_ENDP 4
-const uint32_t epInOrOut[USB_NUM_OF_DEFINED_ENDP]={EP_IN ,EP_OUT,EP_IN ,EP_IN};
-                                                //   EP0 ,   EP1,   EP2,   EP3,
-//Control to host
-#define USB_EP0 0
-#define USB_EP0_ADDR 0
-#define USB_CTRL_EP_IN 0 //endpoint number for control in (dev to host)
-//Control from host
-#define USB_EP1 0
-#define USB_EP1_ADDR 0
-#define USB_CTRL_EP_OUT 1 //endpoint number for control out (host to dev)
 
-//Define custom endpoints other than EP0/1
-#define USB_EP2_IN
-#define USB_EP2_ADDR 1
-//#define USB_EP2_OUT
-#define USB_EP3_IN
-#define USB_EP3_ADDR 2
 //END USER SETTINGS
 
 //Globals
 uint32_t wakeupHostEnabeled=1;
 uint32_t activeConfiguration=0;
-uint32_t Multistage_BytesLeft_EP[USB_NUM_OF_DEFINED_ENDP]={0};
-uint8_t* Multistage_Storage_EP[USB_NUM_OF_DEFINED_ENDP]={0};
-
 
 #include "usb_descriptors.h"
-
 
 //Register and Address definitions
 #define USB_BA 0x40060000
@@ -75,18 +76,6 @@ uint8_t* Multistage_Storage_EP[USB_NUM_OF_DEFINED_ENDP]={0};
 #define USB_CFG(epnum) (*((uint32_t*)(USB_BA+0x508+(epnum<<4))))
 #define USB_CFGP(epnum) (*((uint32_t*)(USB_BA+0x50C+(epnum<<4))))
 
-#define PRIMITIVE_USB_CONFIGURE_EP_IF_DEFINED(epnum) \
-    #ifdef USB_EP##epnum##_IN \
-    USB_BUFFSEG(epnum)=USB_SRAM_SETUP_SIZE+epnum*USB_SRAM_ENDP_SIZE; \
-    USB_setup_ep(epnum,USB_setup_ep_as_in,0,USB_EP##epnum##_ADDR) \
-    #endif \
-    #ifdef USB_EP##epnum##_OUT \
-    USB_BUFFSEG(epnum)=USB_SRAM_SETUP_SIZE+3*USB_SRAM_ENDP_SIZE; \
-    USB_setup_ep(epnum,USB_setup_ep_as_out,0,USB_EP##epnum##_ADDR) \
-    #endif \
-
-#define USB_CONFIGURE_EP_IF_DEFINED(epnum) PRIMITIVE_USB_CONFIGURE_EP_IF_DEFINED(epnum)
-
 #define USB_is_attached_to_host() (USB_FLDET&0x00000001)
 
 static __inline void USB_EP_TO_DATAn(uint32_t ep,uint32_t n){
@@ -95,12 +84,6 @@ static __inline void USB_EP_TO_DATAn(uint32_t ep,uint32_t n){
     }else{ //setDATA0
         USB_CFG(ep)&=0xffffff7f;
     }
-}
-
-enum {USB_setup_ep_as_in=1,USB_setup_ep_as_out=0};
-static __inline void USB_setup_ep(int ep,int in_or_out,int is_isochronous, int ep_addr){ //ep 0-7, in_or_out enum, is_isochronous bit, ep_addr 0-15
-    uint32_t oldCFGval=USB_CFG(ep)&0x00000380;
-    USB_CFG(ep)=oldCFGval+(0x20<<in_or_out)+(is_isochronous<<0x10)+ep_addr;
 }
 
 #define USB_clear_setup_stall(epnum)   (USB_CFG(ep))|=0x00000200 //Clear Stall by setting this bit
@@ -169,14 +152,12 @@ void USB_init(){
     USB_INTEN=0x00000000;
     //Segment the Endpoint Buffers and setup the endpoints
     //USB_BUFFSEG for the setup buffer is already set to 0x00000000 on reset indicating no offset for setup storage space
-    USB_CONFIGURE_EP_IF_DEFINED(0);
-    USB_CONFIGURE_EP_IF_DEFINED(1);
-    //Custom Endpoint Configuration
-    USB_CONFIGURE_EP_IF_DEFINED(2);
-    USB_CONFIGURE_EP_IF_DEFINED(3);
-    USB_CONFIGURE_EP_IF_DEFINED(4);
-    USB_CONFIGURE_EP_IF_DEFINED(5);
-
+    for(uint32_t epnum;epnum<(sizeof(EP_CONFIG_ARRAY)/sizeof(EP_CONFIG_ARRAY[0]));epnum++){
+    USB_EP_CONFIG  EP_CFG=EP_CONFIG_ARRAY[epnum];
+    USB_BUFFSEG(epnum)=USB_SRAM_SETUP_SIZE+epnum*USB_SRAM_ENDP_SIZE;
+    uint32_t oldCFGval=USB_CFG(epnum)&0x00000380;   
+        USB_CFG(ep)=oldCFGval+(0x20<<EP_CFG.EP_IN_OR_OUT)+(EP_CFG.EP_IS_ISOCHR<<0x10)+EP_CFG.EP_ADDR;
+    }
     USB_enable_controller(); //TODO find out when to do this...
     USB_end_reset();
     //enable USB, BUS and FLOATDET interrupt events
@@ -188,14 +169,14 @@ void USB_init(){
 #define USB_is_attached (USB_FLDET&0x00000001)
 void USB_PrepareToSendEp(uint32_t epnum, uint8_t* data, uint32_t packetLength){
     //TODO check if IN endpoint
-    if(!Multistage_BytesLeft_EP[epnum]){ //check if endpoint is busy
+    if(!EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //check if endpoint is busy
         if(packetLength>USB_SRAM_ENDP_SIZE){ //Do we have to split it into multistage transfers?
             for(uint32_t i=0;i<USB_SRAM_ENDP_SIZE;i++){
                 USB_SRAM_EP_ADDR(epnum)[i]=data[i];
             }
             USB_MAXPLD(epnum)=USB_SRAM_ENDP_SIZE;
-            Multistage_Storage_EP[epnum]=data+USB_SRAM_ENDP_SIZE;
-            Multistage_BytesLeft_EP[epnum]=packetLength-USB_SRAM_ENDP_SIZE;
+           EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=data+USB_SRAM_ENDP_SIZE;
+            EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=packetLength-USB_SRAM_ENDP_SIZE;
 
         }else{ //can be handeled in one transfer
             for(uint32_t i=0;i<packetLength;i++){
