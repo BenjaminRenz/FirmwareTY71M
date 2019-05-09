@@ -1,9 +1,6 @@
-NOT WORKING YET
-
-
 0) Requiered Hardware
 -StLink Programmer or other programmer supported by openocd
--Windows Pc
+-Windows PC, if you are planning to use the existing setup
 -ty71 keyboard (disconnect lithium battery for safety)
 
 1) Connect the pins of P3 as the following:
@@ -19,8 +16,3 @@ NOT WORKING YET
 
 3) Install:
     StLinkDriver: https://www.st.com/content/st_com/en/products/development-tools/software-development-tools/stm32-software-development-tools/stm32-programmers/stsw-link004.html (bottom of page, you need to be registered)
-
-4) In GDB
-
-file ./out/firmware.elf
-load
