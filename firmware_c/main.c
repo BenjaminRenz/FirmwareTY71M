@@ -4,9 +4,10 @@
 #include "backlight.h" //functions for setting the rgb led backlight
 
 #include "keymatrix.h" //functions for scanning the key matrix
-
+keydata keys[8][9]={0};
 #include "usb.h"       //usb support
 //Note USB supports up to 8 endpoints
+#include "nvic.h"      //Interrupt controller needed for usb
 
 #include "timer.h"
 
@@ -35,8 +36,10 @@ http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 │ 4  4  4  ---------4--------  4  4  4   4   7  7  7 │
 └────────────────────────────────────────────────────┘
 */
-
+int testval=0;
 void SystemInit(){
+    //Enable XTAL pins to use external clock
+    GPF_MFP=0x00000003;
     //SECTION CLOCK CONFIGURATION
 
     //Unlock configuration registers
@@ -52,7 +55,8 @@ void SystemInit(){
     //Enable external HXT
     ClockContrMemoryMap->PWRCON=CLK_PWRCON_XTL12M_EN_Msk|CLK_PWRCON_OSC22M_EN_Msk|CLK_PWRCON_PD_WU_DLY_Msk|CLK_PWRCON_PD_WU_INT_EN_Msk;
     //Wait for stability of external and internal oscillator
-    while(((~ClockContrMemoryMap->CLKSTATUS)&(CLK_CLKSTATUS_OSC22M_STB_Msk|CLK_CLKSTATUS_XTL12M_STB_Msk|CLK_CLKSTATUS_PLL_STB_Msk))==0){}
+    while(((~ClockContrMemoryMap->CLKSTATUS)&(CLK_CLKSTATUS_OSC22M_STB_Msk|CLK_CLKSTATUS_XTL12M_STB_Msk|CLK_CLKSTATUS_PLL_STB_Msk))){ //while any of the clocks is unstable
+    }
     //Set clock to external
     ClockContrMemoryMap->CLKSEL0=CLK_CLKSEL0_STCLK_S_HCLK_DIV2|CLK_CLKSEL0_HCLK_S_PLL; //Because of conflicting documentation of CLK_CLKSEL0_HCLK_S_LXT I will use CLK_CLKSEL_HCLK_S_PLL, reference says this is PLL/2 but programming library says otherwise
     //Relock configuration registers
@@ -68,7 +72,7 @@ void SystemInit(){
     GPB_MFP=0x00000002; //UART0 Rx and Tx
     GPC_MFP=0x00000000;
     GPD_MFP=0x00000000;
-    GPF_MFP=0x00000000; //DISABLE I2C0
+    GPF_MFP=0x00000003; //DISABLE I2C0 TODO !!!DONT DISABLE XT1 IN
     ALT_MFP=0x60000000;
 
     //GPIO Config (input 0b00 (in), push pull (out) 0b01, opendrain 0b10, bidirect 0b11 (default))
@@ -79,16 +83,18 @@ void SystemInit(){
     GPIOD_PMD=0xFFFFF555; //pd0-pd5 out matrix
     GPIOF_PMD=0x0000001F; //pf2 out matrix,pf3 in powerSRC?
 
-    //Begin Reset state of peripheals
+    //Configure Peripherals
+    NVIC_init(); //Should be called before USB to set interrupts
     USB_init();
-    USART0_start_reset();
-    I2C1_start_reset();
+
+    //USART0_start_reset();
+    //I2C1_start_reset();
 
     //TODO configure clock for i2c
 
 }
+
 int main(void){
-    keydata keys[8][9]={0};
     uint8_t val_red=0;
     uint8_t val_green=0;
     uint8_t val_blue=0;
@@ -102,14 +108,22 @@ int main(void){
         }
         for(int row=0;row<9;row++){
             for(int col=0;col<8;col++){
-                keys[col][row].red=val_red;
+                /*if((*((uint32_t*)(0x5000020c)))&0x00000080){ //Check if clock switch failed
+                    keys[col][row].red=255;
+                    keys[col][row].green=0;
+                }else{
+                    keys[col][row].red=0;
+                    keys[col][row].green=255;
+                }*/
+                //keys[col][row].red=val_red;
                 //keys[col][row].green=val_green;
-                keys[col][row].blue=val_blue;
+                keys[col][row].blue=255;
             }
         }
         setRGB(keys);
         getPressedKeys(keys);
     }
+    USB_clear_se0();
     //For send keys we need to send modifier as keys if no other key is pressed, so our pc can register them without any other keys
 
 }

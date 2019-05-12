@@ -2,17 +2,16 @@
     -handle larger descriptor collection transmissions >0x40 bytes
     -device/endpoint halt feature support
     -call user function to inform on attach/detach
-    -check if endpoint is busy
     -alternative interface modes
 
 */
 
 #ifndef USB_H_INCLUDED
 #define USB_H_INCLUDED
-#include <stdint.h>
-#include <stddef.h>
-
-
+#include <stdint.h>    //needed for uint32_t
+#include <stddef.h>    //needed for sizeof("structs")
+#include "nvic.h"      //Required to enable USB interrupts
+#include "backlight.h" //For testing purposes
 //Sources
 /*
 https://www-user.tu-chemnitz.de/~heha/viewchm.php/hs/usb.chm/usb6.htm
@@ -92,8 +91,9 @@ uint32_t activeConfiguration=0;
 #define USB_FADDR (*((uint32_t*)(USB_BA+0x008))) //Overlaps with ATTR, be careful when writing high bytes
 #define USB_ATTR (*((uint32_t*)(USB_BA+0x010)))
 #define USB_FLDET (*((uint32_t*)(USB_BA+0x014)))
-
 #define USB_BUFFSEG_SETUP (*((uint32_t*)(USB_BA+0x018))) //Overlaps with USB_BUFFSEG(0)
+
+#define USB_DRVSE0 (*((uint32_t*)(USB_BA+0x090)))
 
 #define USB_BUFFSEG(epnum) (*((uint32_t*)(USB_BA+0x500+(epnum<<4))))
 #define USB_CFG(epnum) (*((uint32_t*)(USB_BA+0x508+(epnum<<4))))
@@ -124,12 +124,6 @@ static __inline void USB_set_ctrl_stall(){ //if error indicate that to the host
 
 //only call this after ready with interrupt setup after buffer and after BUFSEG has completed
 #define USB_end_reset() IPRSTC2&=~(1<<27)//Stop sending Reset Signal to USB block
-
-
-
-
-
-
 
 
 /*Interrupt handle functions*/
@@ -169,10 +163,19 @@ static __inline void USB_disable_host_wakeup(void){
     USB_ATTR&=0xffffffdf; //host wakeup enable bit unset
 }
 
+static __inline void USB_set_se0(){
+    USB_DRVSE0|=0x00000001;
+}
+
+void USB_clear_se0(){
+    USB_DRVSE0&=0xfffffffe;
+}
 
 void USB_init(){
     USB_start_reset();
     USB_INTEN=0x00000000;
+    USB_end_reset();
+    USB_ATTR=0x000007D0; //Seems to get ignored
     EP_CONFIG_ARRAY[0]=EP0_CFG;
     EP_CONFIG_ARRAY[1]=EP1_CFG;
     EP_CONFIG_ARRAY[2]=EP2_CFG;
@@ -181,7 +184,6 @@ void USB_init(){
     EP_CONFIG_ARRAY[5]=EP5_CFG;
     EP_CONFIG_ARRAY[6]=EP6_CFG;
     EP_CONFIG_ARRAY[7]=EP7_CFG;
-
     //USB_BUFFSEG for the setup buffer is already set to 0x00000000 on reset indicating no offset for setup storage space
     for(uint32_t epnum;epnum<(sizeof(EP_CONFIG_ARRAY)/sizeof(EP_CONFIG_ARRAY[0]));epnum++){
         //Segment the Endpoint Buffers and setup the endpoints
@@ -203,10 +205,14 @@ void USB_init(){
             }
         }
     }
+
+    /*USB_enable_phy(); //TODO find out when to do this...
+    */
+
     USB_enable_controller(); //TODO find out when to do this...
-    USB_end_reset();
     //enable USB, BUS and FLOATDET interrupt events
     USB_INTEN=0x00000007;
+    USB_set_se0();
 }
 
 

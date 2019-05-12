@@ -16,3 +16,6 @@
 
 3) Install:
     StLinkDriver: https://www.st.com/content/st_com/en/products/development-tools/software-development-tools/stm32-software-development-tools/stm32-programmers/stsw-link004.html (bottom of page, you need to be registered)
+
+4) Start Codeblocks with the "START_codeblocks_with_gdb.bat" file, tweak the firmware to your liking, then compile it with the "gear icon".
+   Select "Compile and Upload on Debug" from the dropdown next to the compile icon, then hit the red play button which will start the debugger and upload the firmware to your keyboard.

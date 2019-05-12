@@ -1,2 +1,0 @@
-SET scriptpath=%~dp0
-%scriptpath%\OpenOCD-20181130\bin\openocd.exe -f %scriptpath%\OpenOCD-20181130\share\openocd\scripts\interface\stlink.cfg -f %scriptpath%\OpenOCD-20181130\share\openocd\scripts\target\numicro.cfg

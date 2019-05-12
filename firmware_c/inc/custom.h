@@ -3,8 +3,9 @@
 #define CUSTOM_H_INCLUDED
 
 #include <stdint.h>
-//variable names are derived from the manual at http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
-
+/*variable names are derived from the manual at
+http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
+*/
 //Clock configuration defines
 #define AHB_BASE 0x50000000
 #define CLK_BASE_POINTER ((uint32_t*)(AHB_BASE+0x00200))
@@ -130,40 +131,11 @@ typedef struct{
     uint32_t PLLCON;
 } CLK_T;
 
-//Interrupt type
-typedef enum IRQn{
-    //Cortex-m0
-    NonMaskableInt_IRQn = -14,
-    HardFault_IRQn      = -13,
-    SVCall_IRQn         = -5,
-    PendSV_IRQn         = -2,
-    SysTick_IRQn        = -1,
-    //ARMIKMCU
-    BOD_IRQn            = 0,
-    WDT_IRQn            = 1,
-    EINT0_IRQn          = 2,
-    EINT1_IRQn          = 3,
-    GPAB_IRQn           = 4,
-    GPCD_IRQn           = 5,
-    PWMA_IRQn           = 6,
-    TMR0_IRQn           = 8,
-    TMR1_IRQn           = 9,
-    TMR2_IRQn           = 10,
-    TMR3_IRQn           = 11,
-    UART0_IRQn          = 12,
-    UART1_IRQn          = 13,
-    SPI0_IRQn           = 14,
-    SPI1_IRQn           = 15,
-    I2C1_IRQn           = 19,
-    USBD_IRQn           = 23,
-    PS2_IRQn            = 24,
-    PWRWU_IRQn          = 28,
-    RTC_IRQn            = 31
-} IRQn_Type;
+
 //number of interrupt priority bits
 #define __NVIC_PRIO_BITS 2
 //Include of standard arm headers
-#include "core_cm0.h"     //Core periphial library header
-#include "core_cmInstr.h" //Assembler Instructions
+//#include "core_cm0.h"     //Core periphial library header
+//#include "core_cmInstr.h" //Assembler Instructions
 
 #endif // CUSTOM_H_INCLUDED
