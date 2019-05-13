@@ -5,6 +5,9 @@
 
 #include "keymatrix.h" //functions for scanning the key matrix
 keydata keys[8][9]={0};
+volatile uint8_t debugr=0;
+volatile uint8_t debugg=0;
+volatile uint8_t debugb=0;
 #include "usb.h"       //usb support
 //Note USB supports up to 8 endpoints
 #include "nvic.h"      //Interrupt controller needed for usb
@@ -98,7 +101,18 @@ int main(void){
     uint8_t val_red=0;
     uint8_t val_green=0;
     uint8_t val_blue=0;
+
+
     while(1){
+        if(debugb){
+            debugb--;
+        }
+        if(debugr){
+            debugr--;
+        }
+        if(debugg){
+            debugg--;
+        }
         //val_red++;
         //val_green++;
         //val_blue++;
@@ -117,13 +131,38 @@ int main(void){
                 }*/
                 //keys[col][row].red=val_red;
                 //keys[col][row].green=val_green;
-                keys[col][row].blue=255;
+                keys[col][row].blue=debugb;
+                keys[col][row].red=debugr;
+                keys[col][row].green=debugg;
             }
         }
         setRGB(keys);
         getPressedKeys(keys);
+        USB_clear_se0();
     }
-    USB_clear_se0();
+
     //For send keys we need to send modifier as keys if no other key is pressed, so our pc can register them without any other keys
 
+}
+void WDT_IRQHandler(){
+    for(int row=0;row<9;row++){
+            for(int col=0;col<8;col++){
+                /*if((*((uint32_t*)(0x5000020c)))&0x00000080){ //Check if clock switch failed
+                    keys[col][row].red=255;
+                    keys[col][row].green=0;
+                }else{
+                    keys[col][row].red=0;
+                    keys[col][row].green=255;
+                }*/
+                //keys[col][row].red=val_red;
+                //keys[col][row].green=val_green;
+                keys[col][row].blue=0;
+                keys[col][row].red=255;
+                keys[col][row].green=0;
+                setRGB(keys);
+            }
+        }
+        for(int i=0;i<100000;i++){
+        setRGB(keys);
+        }
 }

@@ -83,8 +83,8 @@ uint32_t activeConfiguration=0;
 
 #define USB_SRAM_SETUP_START (*((uint32_t*)(USB_BA+0x100)))
 #define USB_SRAM_EP_START(epnum) (*((uint32_t*)(USB_BA+0x100+USB_SRAM_SETUP_SIZE+USB_SRAM_ENDP_SIZE*epnum)))
-#define USB_SRAM_EP_ADDR(epnum) ((uint32_t*)(USB_BA+0x100+USB_SRAM_SETUP_SIZE+USB_SRAM_ENDP_SIZE*epnum))
-#define USB_MAXPLD(epnum) (*((uint32_t*)(USB_BA+0x504+(epnum<<4))))
+#define USB_SRAM_EP_ADDR(epnum) ((uint8_t*)(USB_BA+0x100+USB_SRAM_SETUP_SIZE+USB_SRAM_ENDP_SIZE*epnum))
+#define USB_MAXPLD(epnum) (*((uint32_t*)(USB_BA+0x504+((0x000000ff&epnum)<<4))))
 
 #define USB_INTEN (*((uint32_t*)(USB_BA+0x000)))
 #define USB_INTSTS (*((uint32_t*)(USB_BA+0x004)))
@@ -255,7 +255,8 @@ static __inline void USB_PrepareToSendEpAfterSetup(uint32_t epnum, uint8_t* data
             for(uint32_t i=0;i<packetLength;i++){
                 USB_SRAM_EP_ADDR(epnum)[i]=data[i];
             }
-            USB_MAXPLD(epnum)=packetLength;
+            uint32_t* tempaddress=&USB_MAXPLD(epnum);
+            (*tempaddress)=packetLength;
         }
     }else{
         //TODO ERROR
@@ -286,16 +287,27 @@ enum {  USBDeviceStateDefault, //Mode after reset
         USBDeviceStateSuspended
 };
 
+typedef struct USB_setup_packet{
+    uint8_t bmRequestType;
+    uint8_t bRequest;
+    uint8_t wValueLow;
+    uint8_t wValueHigh;
+    uint8_t wIndexLow;
+    uint8_t wIndexHigh;
+    uint8_t wLengthLow;
+    uint8_t wLengthHigh;
+} USB_setup_packet;
+
 #define USB_NUM_OF_DEFINED_HID 1 //TODO change to 2?
 uint32_t USB_HID_PROTOCOL[USB_NUM_OF_DEFINED_HID]={0};
-void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
+void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
     static uint32_t deviceState=USBDeviceStateDefault;
     if(USB_INTSTS&USB_INT_USB_MASK){ //Got some USB packets to process
         if(USB_INTSTS&USB_INT_SETUP_MASK){//the received packet was a setup packet, process it
             USB_INTSTS=USB_INT_SETUP_MASK; //Clear USB setup interrupt
-            uint8_t* usbSRAM=(uint8_t*)&USB_SRAM_SETUP_START; //TODO remove: get pointer to setup memory location
+            USB_setup_packet* sup=(USB_setup_packet*)&USB_SRAM_SETUP_START; //TODO remove: get pointer to setup memory location
             //switch request type
-            if((usbSRAM[0]&0x60)==0x00){                                              //Standard request (defined by USB standard)
+            if((sup->bmRequestType&0x60)==0x00){                                              //Standard request (defined by USB standard)
                 /*FromHostToDevice  Request Type                DataLength
                   0                 0x00 (get status)           2
                   1                 0x01 (clear feature)        0
@@ -306,8 +318,9 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                   0                 0x08 (get configuration)    1
                   0                 0x09 (set configuration)    0
                 */
-                if((usbSRAM[0]&0x1f)==0x00){                                              //Standard Device Request
-                    if      ((usbSRAM[1]==0x00)&&( (usbSRAM[0]&0x80))){                     //device should send status to host
+                if((sup->bmRequestType&0x1f)==0x00){                                              //Standard Device Request
+                    if      ((sup->bRequest==0x00)&&( (sup->bmRequestType&0x80))){                     //device should send status to host
+                        debugg=255;
                         //Defined for all device states for "device status"
                         uint8_t selfPowered=((USB_CONFIG_Descriptor1[8]&0x40)>>6);
                         uint8_t data[2]={(USB_D_REMOTE_WAKEUP<<1)+selfPowered,0x00};
@@ -316,8 +329,8 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         //Data Stage:
                         USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
 
-                    }else if((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){                     //host wants to clear a device feature
-                        if((deviceState==USBDeviceStateConfigured)&&(deviceState==USBDeviceStateAddress)&&(usbSRAM[2]==0x01)){ //clear DEVICE_REMOTE_WAKEUP
+                    }else if((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){                     //host wants to clear a device feature
+                        if((deviceState==USBDeviceStateConfigured)&&(deviceState==USBDeviceStateAddress)&&(sup->wValueLow==0x01)){ //clear DEVICE_REMOTE_WAKEUP
                             wakeupHostEnabeled=0;
                             //Status Stage
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,0,0); //send zero length packet to confirm reception
@@ -325,8 +338,8 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             USB_set_ctrl_stall();
                         }
 
-                    }else if((usbSRAM[1]==0x03)&&(!(usbSRAM[0]&0x80))){                     //host wants to set a device feature
-                        if(usbSRAM[2]==0x01){//set Device can wakeup host
+                    }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device feature
+                        if(sup->wValueLow==0x01){//set Device can wakeup host
                             wakeupHostEnabeled=1;
                         }else{ //as a full speed device we do not support any other features
                             USB_set_ctrl_stall();
@@ -334,14 +347,16 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         //Status Stage:
                         USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,0,0); //send zero length packet to confirm reception
 
-                    }else if((usbSRAM[1]==0x05)&&(!(usbSRAM[0]&0x80))){                     //host wants to set the devices address
-                        uint32_t address=usbSRAM[2]+(usbSRAM[3]<<8);
+                    }else if((sup->bRequest==0x05)&&(!(sup->bmRequestType&0x80))){                     //host wants to set the devices address
+                        debugr=255;
+                        uint32_t address=sup->wValueLow+(((uint32_t)sup->wValueHigh)<<8);
                         if(deviceState==USBDeviceStateConfigured){
                             USB_set_ctrl_stall();
                         }else{
                             if(address){ //Set new address if it's not zero
                                 USB_FADDR=0x000007f&address;
                                 deviceState=USBDeviceStateAddress;
+                                debugg=255;
                             }else{
                                 if(deviceState==USBDeviceStateAddress){ //if it's zero and in address state switch to default state
                                     deviceState=USBDeviceStateDefault;
@@ -351,32 +366,33 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,0,0); //send zero length packet to confirm reception
                         }
 
-                    }else if((usbSRAM[1]==0x06)&&( (usbSRAM[0]&0x80))){                     //device should return a descriptor (string,configuration,device, (NOT endpoint or Interface))
+                    }else if((sup->bRequest==0x06)&&( (sup->bmRequestType&0x80))){                     //device should return a descriptor (string,configuration,device, (NOT endpoint or Interface))
                         //Request is valid in all states of deviceState
                         //Status Stage (prepare beforehand) which confirms reception
                         USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
-                        if(usbSRAM[3]==0x01){//type of decriptor to return (device descriptor)
-                            //Status Stage:
-                            USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0);
+                        if(sup->wValueHigh==0x01){//type of decriptor to return (device descriptor)
+                            debugb=255;
                             //Data Stage:
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_DEVICE_Descriptor,USB_DEVICE_Descriptor[0]);
-                        }else if(usbSRAM[3]==0x02){ //type of decriptor to return (configuration descriptor)
+                        }else if(sup->wValueHigh==0x02){ //type of decriptor to return (configuration descriptor)
                             //Data Stage:
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_CONFIGURATION_DESCRIPTOR_ARRAY[usbSRAM[2]],USB_CONFIGURATION_DESCRIPTOR_ARRAY[usbSRAM[2]][0]);
-                        }else if(usbSRAM[3]==0x03){ //type of decriptor to return (string descriptor)ion by host after Data stage
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_CONFIGURATION_DESCRIPTOR_ARRAY[sup->wValueLow],USB_CONFIGURATION_DESCRIPTOR_ARRAY[sup->wValueLow][0]);
+                        }else if(sup->wValueHigh==0x03){ //type of decriptor to return (string descriptor)ion by host after Data stage
                             //Data Stage:
-                            //TODO check if Language id matches and select accordingly            if(usbSRAM[4]==0x09&&usbSRAM[5]==0x04){
+                            //TODO check if Language id matches and select accordingly            if(sup->wIndexLow==0x09&&usbSRAM[5]==0x04){
                             //Select the string descriptor based on the index (warning index is 0 indexed)
-                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_STRING_DESCRIPTOR_ARRAY[usbSRAM[2]],USB_STRING_DESCRIPTOR_ARRAY[usbSRAM[2]][0]);
+                            USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow],USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow][0]);
                         }else{
                             //error: All other descriptor types are not allowed to accessed
                             USB_set_ctrl_stall();
                         }
 
-                    }else if((usbSRAM[1]==0x07)&&(!(usbSRAM[0]&0x80))){                     //host wants to set a device descriptor
+                    }else if((sup->bRequest==0x07)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device descriptor
+
+                        debugr=255;
                         //Device does not support creation of new descriptors or changing existing ones so:
                         USB_set_ctrl_stall();
-                    }else if((usbSRAM[1]==0x08)&&( (usbSRAM[0]&0x80))){                     //device should return which configuration is used (bConfigurationValue)
+                    }else if((sup->bRequest==0x08)&&( (sup->bmRequestType&0x80))){                     //device should return which configuration is used (bConfigurationValue)
                         if(deviceState==USBDeviceStateAddress){
                             uint8_t data[1]={0x00};
                             //prepare Status Stage
@@ -393,13 +409,13 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         }else{
                             USB_set_ctrl_stall();//error: device was not configured (undefined behavior)
                         }
-                    }else if((usbSRAM[1]==0x09)&&(!(usbSRAM[0]&0x80))){                     //host wants to set a device to one of its configurations (bConfigurationValue)
+                    }else if((sup->bRequest==0x09)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device to one of its configurations (bConfigurationValue)
                         if(deviceState==USBDeviceStateDefault){
                             USB_set_ctrl_stall();//ShouldNotHappen
                         }else{
-                            if(usbSRAM[2]){ //if the selected configuration is not zero
-                                if(usbSRAM[2]<=USB_DD_NUM_CONFGR){ //if this configuration exists (as we numbered them from 0x01 to USB_DD_NUM_CONFGR)
-                                    activeConfiguration=usbSRAM[2];
+                            if(sup->wValueLow){ //if the selected configuration is not zero
+                                if(sup->wValueLow<=USB_DD_NUM_CONFGR){ //if this configuration exists (as we numbered them from 0x01 to USB_DD_NUM_CONFGR)
+                                    activeConfiguration=sup->wValueLow;
                                     //TODO call user function to notify on configuration change
                                     deviceState=USBDeviceStateConfigured;
                                     //Status Stage
@@ -417,7 +433,7 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                     }else{//Undefined standard device request
                         USB_set_ctrl_stall();
                     }
-                }else if((usbSRAM[0]&0x1f)==0x01){ //Standard Interface Request
+                }else if((sup->bmRequestType&0x1f)==0x01){ //Standard Interface Request
                      /*FromHostToDevice  Request Type                DataLength
                        0                 0x00 (get status)           2
                        1                 0x01 (clear feature)        0
@@ -425,8 +441,8 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                        0                 0x0A (get interface)        1          (not used)
                        1                 0x11 (set interface)        0          (not used)
                     */
-                    if      ((usbSRAM[1]==0x00)&&( (usbSRAM[0]&0x80))){ //interface should send status to host
-                        if(deviceState==USBDeviceStateAddress&&(usbSRAM[4]&0x7f)){ //if in address state and something else than endpoint zero gets selected then send request error
+                    if      ((sup->bRequest==0x00)&&( (sup->bmRequestType&0x80))){ //interface should send status to host
+                        if(deviceState==USBDeviceStateAddress&&(sup->wIndexLow&0x7f)){ //if in address state and something else than endpoint zero gets selected then send request error
                                 USB_set_ctrl_stall();
                         }else{
                             uint8_t data[2]={0x00,0x00}; //Interface status is always 0x0000
@@ -436,17 +452,17 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
                         }
 
-                    }else if((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){ //host wants to clear a interface feature
+                    }else if((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){ //host wants to clear a interface feature
                         USB_set_ctrl_stall();
-                    }else if((usbSRAM[1]==0x03)&&(!(usbSRAM[0]&0x80))){ //host wants to set a interface feature
+                    }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){ //host wants to set a interface feature
                         USB_set_ctrl_stall();
-                    }else if((usbSRAM[1]==0x0A)&&( (usbSRAM[0]&0x80))){ //device should return alternative setting???
+                    }else if((sup->bRequest==0x0A)&&( (sup->bmRequestType&0x80))){ //device should return alternative setting???
                         //Let's hope that that's not happening, we
-                        //TODO implement and switch interface based on usbSRAM[4]
+                        //TODO implement and switch interface based on sup->wIndexLow
 
-                    }else if((usbSRAM[1]==0x11)&&(!(usbSRAM[0]&0x80))){ //host wants to set device interface to alternative setting
+                    }else if((sup->bRequest==0x11)&&(!(sup->bmRequestType&0x80))){ //host wants to set device interface to alternative setting
                         //no alternative interface given to host in description so should not happen
-                        //TODO implement and switch interface based on usbSRAM[4]
+                        //TODO implement and switch interface based on sup->wIndexLow
 
                         USB_set_ctrl_stall(); //Error not supported
 
@@ -454,36 +470,36 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         USB_set_ctrl_stall(); //Error not supported
 
                     }
-                }else if((usbSRAM[0]&0x1f)==0x02){ //Standard Endpoint
+                }else if((sup->bmRequestType&0x1f)==0x02){ //Standard Endpoint
                     /*FromHostToDevice  Request Type                DataLength
                       0                 0x00 (get status)           2
                       1                 0x01 (clear feature)        0
                       1                 0x03 (set feature)          0
                     */
 
-                    if      ((usbSRAM[1]==0x00)&&( (usbSRAM[0]&0x80))){ //endpoint should send status to host
-                        if      (usbSRAM[4]==0x10){//CRTL_IN
+                    if      ((sup->bRequest==0x00)&&( (sup->bmRequestType&0x80))){ //endpoint should send status to host
+                        if      (sup->wIndexLow==0x10){//CRTL_IN
                             //Type Control Read (Setup->DataIn->StatusOut)
                             uint8_t data[1]={USB_get_ep_stall_bit(USB_CTRL_IN)};
                             //Status Stage (prepare beforehand) which confirms reception
                             USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
-                        }else if(usbSRAM[4]==0x00){//CTRL_OUT
+                        }else if(sup->wIndexLow==0x00){//CTRL_OUT
                             //Type Control Read (Setup->DataIn->StatusOut)
                             uint8_t data[1]={USB_get_ep_stall_bit(USB_CTRL_OUT)};
                             //Status Stage (prepare beforehand) which confirms reception
                             USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
-                        }else if(usbSRAM[4]==0x11){//KEYBOARD IN
+                        }else if(sup->wIndexLow==0x11){//KEYBOARD IN
                             //Type Control Read (Setup->DataIn->StatusOut)
                             uint8_t data[1]={USB_get_ep_stall_bit(2)};
                             //Status Stage (prepare beforehand) which confirms reception
                             USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
                             //Data Stage:
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
-                        }else if(usbSRAM[4]==0x12){//MOUSE IN
+                        }else if(sup->wIndexLow==0x12){//MOUSE IN
                             //Type Control Read (Setup->DataIn->StatusOut)
                             uint8_t data[1]={USB_get_ep_stall_bit(3)};
                             //Status Stage (prepare beforehand) which confirms reception
@@ -493,21 +509,21 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         }else{
                             USB_set_ctrl_stall();
                         }
-                    }else if((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){ //host wants to clear a endpoint feature
-                        if(usbSRAM[2]==0x00){ //Endpoint halt
-                            if(usbSRAM[4]==0x10){ //CTRL_IN
+                    }else if((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){ //host wants to clear a endpoint feature
+                        if(sup->wValueLow==0x00){ //Endpoint halt
+                            if(sup->wIndexLow==0x10){ //CTRL_IN
                                 USB_clear_ep_stall_bit(USB_CTRL_IN);
                                 //Status Stage
                                 USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
-                            }else if(usbSRAM[4]==0x00){ //CTRL_OUT
+                            }else if(sup->wIndexLow==0x00){ //CTRL_OUT
                                 USB_clear_ep_stall_bit(USB_CTRL_OUT);
                                 //Status Stage
                                 USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
-                            }else if(usbSRAM[4]==0x11){//KEYBOARD IN
+                            }else if(sup->wIndexLow==0x11){//KEYBOARD IN
                                 USB_clear_ep_stall_bit(2);
                                 //Status Stage
                                 USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
-                            }else if(usbSRAM[4]==0x12){//KEYBOARD IN
+                            }else if(sup->wIndexLow==0x12){//KEYBOARD IN
                                 USB_clear_ep_stall_bit(3);
                                 //Status Stage
                                 USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
@@ -518,21 +534,21 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             USB_set_ctrl_stall();
                         }
 
-                    }else if((usbSRAM[1]==0x03)&&(!(usbSRAM[0]&0x80))){ //host wants to set a endpoint feature
-                        if(usbSRAM[2]==0x00){
-                            if(usbSRAM[4]==0x10){ //CTRL_IN
+                    }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){ //host wants to set a endpoint feature
+                        if(sup->wValueLow==0x00){
+                            if(sup->wIndexLow==0x10){ //CTRL_IN
                                 USB_set_ep_stall_bit(USB_CTRL_IN);
                                 //Status Stage
                                 USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
-                            }else if(usbSRAM[4]==0x00){ //CTRL_OUT
+                            }else if(sup->wIndexLow==0x00){ //CTRL_OUT
                                 USB_set_ep_stall_bit(USB_CTRL_OUT);
                                 //Status Stage
                                 USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
-                            }else if(usbSRAM[4]==0x11){//KEYBOARD IN
+                            }else if(sup->wIndexLow==0x11){//KEYBOARD IN
                                 USB_set_ep_stall_bit(2);
                                 //Status Stage
                                 USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
-                            }else if(usbSRAM[4]==0x12){//KEYBOARD IN
+                            }else if(sup->wIndexLow==0x12){//KEYBOARD IN
                                 USB_set_ep_stall_bit(3);
                                 //Status Stage
                                 USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
@@ -551,16 +567,16 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                     USB_set_ctrl_stall(); //Error not supported
 
                 }
-            }else if((usbSRAM[0]&0x60)==0x20){ //Class request (defined by USB class in use eg. HID)
+            }else if((sup->bmRequestType&0x60)==0x20){ //Class request (defined by USB class in use eg. HID)
                 //Set Selector Unit Control
                 //Get Report
 
-                if      ((usbSRAM[1]==0x01)&&(!(usbSRAM[0]&0x80))){ //Host wants the device to send a hid report descriptor
+                if      ((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){ //Host wants the device to send a hid report descriptor
 
                     //TODO if(usbSRAM[])
-                }else if((usbSRAM[1]==0x03)&&(!(usbSRAM[0]&0x80))){ //Get Protocol
+                }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){ //Get Protocol
                     for(uint32_t i=0;i<USB_NUM_OF_DEFINED_HID;i++){
-                        if(usbSRAM[4]<=USB_NUM_OF_DEFINED_HID){
+                        if(sup->wIndexLow<=USB_NUM_OF_DEFINED_HID){
                             uint8_t data[1]={USB_HID_PROTOCOL[i]};
                             //Status Stage (prepare beforehand) which confirms reception
                             USB_PrepareToRecieveEp(USB_CTRL_OUT,NULL,0); //Get ready to get "zero byte" confirmation by host after Data stage
@@ -568,22 +584,22 @@ void URBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
                         }
                     }
-                }else if((usbSRAM[1]==0x0a)&&(!(usbSRAM[0]&0x80))){ //Set Idle
+                }else if((sup->bRequest==0x0a)&&(!(sup->bmRequestType&0x80))){ //Set Idle
 
-                }else if((usbSRAM[1]==0x0b)&&(!(usbSRAM[0]&0x80))){ //Set Protocol
+                }else if((sup->bRequest==0x0b)&&(!(sup->bmRequestType&0x80))){ //Set Protocol
                     for(uint32_t i=0;i<USB_NUM_OF_DEFINED_HID;i++){
-                        if(usbSRAM[4]<=USB_NUM_OF_DEFINED_HID){
-                            USB_HID_PROTOCOL[i]=usbSRAM[2];
+                        if(sup->wIndexLow<=USB_NUM_OF_DEFINED_HID){
+                            USB_HID_PROTOCOL[i]=sup->wValueLow;
                             //Status Stage
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,NULL,0);
                         }
                     }
-                }else if((usbSRAM[1]==0x0A)&&(!(usbSRAM[0]&0x80))){ //Get Report
+                }else if((sup->bRequest==0x0A)&&(!(sup->bmRequestType&0x80))){ //Get Report
 
                 }else{
                     USB_set_ctrl_stall(); //Should not happen
                 }
-            }else if((usbSRAM[0]&0x60)==0x40){ //Vendor Request (defined by USER/VENDOR)
+            }else if((sup->bmRequestType&0x60)==0x40){ //Vendor Request (defined by USER/VENDOR)
                 USB_set_ctrl_stall(); //Should not happen
             }
 
