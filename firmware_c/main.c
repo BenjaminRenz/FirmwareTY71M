@@ -41,18 +41,18 @@ http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 */
 int testval=0;
 void SystemInit(){
+    //TODO use CONFIG0 for all of this in the future
     //Enable XTAL pins to use external clock
-    GPF_MFP=0x00000003;
+    GPF_MFP=0x00000003; //Xtal pins, transformed to IO-pins after reboot, so enable them before clock switching
     //SECTION CLOCK CONFIGURATION
-
     //Unlock configuration registers
     SYS_UnlockReg();
     //Configure clock for periphials, pll, ...
     CLK_T* ClockContrMemoryMap=(CLK_T*) CLK_BASE_POINTER;
-    ClockContrMemoryMap->AHBCLK=CLK_AHBCLK_ISP_Msk; //TODO check if really required
-    ClockContrMemoryMap->APBCLK=CLK_APBCLK_USBD_Msk|CLK_APBCLK_I2C1_Msk|CLK_APBCLK_UART0_Msk; //Clock for usb,i2c1 and uart0 enabled
+    ClockContrMemoryMap->AHBCLK=CLK_AHBCLK_ISP_Msk;                                             //TODO check if (ISP clock) required
+    ClockContrMemoryMap->APBCLK=CLK_APBCLK_USBD_Msk|CLK_APBCLK_I2C1_Msk|CLK_APBCLK_UART0_Msk;   //Clock for usb,i2c1 and uart0 enabled
     ClockContrMemoryMap->CLKDIV=CLK_CLKDIV_USB(3)|CLK_CLKDIV_HCLK(2);
-    ClockContrMemoryMap->PLLCON=70; //FB_DV=70, OUT_DV=0, IN_DV=0, PLL_SRC=HXT
+    ClockContrMemoryMap->PLLCON=70;                                                             //FB_DV=70, OUT_DV=0, IN_DV=0, PLL_SRC=HXT
     ClockContrMemoryMap->CLKSEL1=CLK_CLKSEL1_WDT_S_HCLK_DIV2048|CLK_CLKSEL1_UART_S_PLL;
     //ClockContrMemoryMap->CLKSEL2=//CLK_CLKSEL2
     //Enable external HXT
@@ -75,7 +75,7 @@ void SystemInit(){
     GPB_MFP=0x00000002; //UART0 Rx and Tx
     GPC_MFP=0x00000000;
     GPD_MFP=0x00000000;
-    GPF_MFP=0x00000003; //DISABLE I2C0 TODO !!!DONT DISABLE XT1 IN
+    GPF_MFP=0x00000003; //Enable Xtal pins for external 4MHz Quartz
     ALT_MFP=0x60000000;
 
     //GPIO Config (input 0b00 (in), push pull (out) 0b01, opendrain 0b10, bidirect 0b11 (default))
@@ -87,8 +87,8 @@ void SystemInit(){
     GPIOF_PMD=0x0000001F; //pf2 out matrix,pf3 in powerSRC?
 
     //Configure Peripherals
-    NVIC_init(); //Should be called before USB to set interrupts
     USB_init();
+    NVIC_init(); //Should be after USB because USB needs to initialize first
 
     //USART0_start_reset();
     //I2C1_start_reset();
@@ -98,11 +98,6 @@ void SystemInit(){
 }
 
 int main(void){
-    uint8_t val_red=0;
-    uint8_t val_green=0;
-    uint8_t val_blue=0;
-
-
     while(1){
         if(debugb){
             debugb--;
@@ -113,24 +108,8 @@ int main(void){
         if(debugg){
             debugg--;
         }
-        //val_red++;
-        //val_green++;
-        //val_blue++;
-        if(val_green++==100){
-            val_blue++;
-            val_green=0;
-        }
         for(int row=0;row<9;row++){
             for(int col=0;col<8;col++){
-                /*if((*((uint32_t*)(0x5000020c)))&0x00000080){ //Check if clock switch failed
-                    keys[col][row].red=255;
-                    keys[col][row].green=0;
-                }else{
-                    keys[col][row].red=0;
-                    keys[col][row].green=255;
-                }*/
-                //keys[col][row].red=val_red;
-                //keys[col][row].green=val_green;
                 keys[col][row].blue=debugb;
                 keys[col][row].red=debugr;
                 keys[col][row].green=debugg;
@@ -145,24 +124,5 @@ int main(void){
 
 }
 void WDT_IRQHandler(){
-    for(int row=0;row<9;row++){
-            for(int col=0;col<8;col++){
-                /*if((*((uint32_t*)(0x5000020c)))&0x00000080){ //Check if clock switch failed
-                    keys[col][row].red=255;
-                    keys[col][row].green=0;
-                }else{
-                    keys[col][row].red=0;
-                    keys[col][row].green=255;
-                }*/
-                //keys[col][row].red=val_red;
-                //keys[col][row].green=val_green;
-                keys[col][row].blue=0;
-                keys[col][row].red=255;
-                keys[col][row].green=0;
-                setRGB(keys);
-            }
-        }
-        for(int i=0;i<100000;i++){
-        setRGB(keys);
-        }
+    debugr=255;
 }

@@ -12,7 +12,7 @@ startupFile:=.\startup_NUC122.S
 
 InFiles:=main.c $(startupFile)
 elfFile:=.\out\firmware.elf
-ccFlags:=-g --specs=nosys.specs -Wall -mcpu=cortex-m0 -mthumb -mfloat-abi=soft
+ccFlags:=-g --specs=nosys.specs -Wall -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -Wextra
 ldFlags:=-T.\gcc_arm.ld
 
 firmwareOUT:=.\out\firmware.bin

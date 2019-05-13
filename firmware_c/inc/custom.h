@@ -51,9 +51,9 @@ http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 
 //backlight
 #define GPIOA12_DOUT (*((uint32_t*)(GP_BA+0x230))) //high backlight on, low backlight off
-#define GPIOB10_DOUT (*((uint32_t*)(GP_BA+0x268))) //clock to shift through the rgister
-#define GPIOC0_DOUT  (*((uint32_t*)(GP_BA+0x280)))//pull low then high to display internal shifted values on the output pins
-#define GPIOC1_DOUT  (*((uint32_t*)(GP_BA+0x284)))//connected to data in pin on first shift register
+#define GPIOB10_DOUT (*((uint32_t*)(GP_BA+0x268))) //clock to shift through the register
+#define GPIOC0_DOUT  (*((uint32_t*)(GP_BA+0x280))) //pull low then high to display internal shifted values on the output pins
+#define GPIOC1_DOUT  (*((uint32_t*)(GP_BA+0x284))) //connected to data in pin on first shift register
 
 //keymatrix
 //out PA13 PD0 PD1 - PD5 PF2 PB8
@@ -130,12 +130,5 @@ typedef struct{
     uint32_t CLKSEL2;
     uint32_t PLLCON;
 } CLK_T;
-
-
-//number of interrupt priority bits
-#define __NVIC_PRIO_BITS 2
-//Include of standard arm headers
-//#include "core_cm0.h"     //Core periphial library header
-//#include "core_cmInstr.h" //Assembler Instructions
 
 #endif // CUSTOM_H_INCLUDED

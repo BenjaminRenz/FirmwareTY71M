@@ -34,7 +34,7 @@ void getPressedKeys(keydata KeyDataListIN[8][9]){
             uint32_t* inputAddressPointer;
             inputAddressPointer=(uint32_t*)colINPointer[currentcol];
             if(!(*inputAddressPointer)){ //key is pressed
-                KeyDataListIN[currentcol][currentrow].green=255;
+                KeyDataListIN[currentcol][currentrow].green=255; //TODO add function here to further process keypress
             }else{ //key is released
                 KeyDataListIN[currentcol][currentrow].green=0;
             }
