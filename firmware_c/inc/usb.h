@@ -19,8 +19,9 @@ https://www.beyondlogic.org/usbnutshell/usb6.shtml#GetDescriptor
 http://sdphca.ucsd.edu/lab_equip_manuals/usb_20.pdf
 https://proyectosfie.webcindario.com/usb/libro/capitulo11.pdf   //Info on hid
 */
-enum{EP_IN=0b10, EP_OUT=0b01, EP_DISABELED=0b00}; //EP_STATE
-enum{EP_IS_ISOCHR=1,EP_NOT_ISOCHR=0}; //EP_ISOCH
+enum{EP_IN=0b10, EP_OUT=0b01, EP_DISABELED=0b00};   //EP_STATE
+enum{EP_IS_ISOCHR=1,EP_NOT_ISOCHR=0};               //EP_ISOCH
+
 typedef struct USB_EP_CONFIG{
     uint32_t EP_STATE :2;
     uint32_t EP_ADDR :4;
@@ -116,6 +117,7 @@ static __inline void USB_EP_TO_DATAn(uint32_t ep,uint32_t n){
 #define USB_clear_ep_stall_bit(epnum)  (USB_CFGP(epnum)&=0xfffffffd)
 #define USB_get_ep_stall_bit(epnum)    ((USB_CFGP(epnum)&0x00000002)>>1)
 static __inline void USB_set_ctrl_stall(){ //if error indicate that to the host
+    debugr=255;
     USB_set_ep_stall_bit(USB_CTRL_OUT);
     USB_set_ep_stall_bit(USB_CTRL_IN);
 }
@@ -256,8 +258,7 @@ static __inline void USB_PrepareToSendEpAfterSetup(uint32_t epnum, uint8_t* data
             for(uint32_t i=0;i<packetLength;i++){
                 USB_SRAM_EP_ADDR(epnum)[i]=data[i];
             }
-            uint32_t* tempaddress=&USB_MAXPLD(epnum);
-            (*tempaddress)=packetLength;
+            USB_MAXPLD(epnum)=packetLength;
         }
     }else{
         //TODO ERROR
@@ -301,6 +302,7 @@ typedef struct USB_setup_packet{
 
 #define USB_NUM_OF_DEFINED_HID 1 //TODO change to 2?
 uint32_t USB_HID_PROTOCOL[USB_NUM_OF_DEFINED_HID]={0};
+
 void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
     static uint32_t deviceState=USBDeviceStateDefault;
     if(USB_INTSTS&USB_INT_USB_MASK){ //Got some USB packets to process
@@ -331,7 +333,6 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,data,sizeof(data));
 
                     }else if((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){                     //host wants to clear a device feature
-                        debugg=255;
                         if((deviceState==USBDeviceStateConfigured)&&(deviceState==USBDeviceStateAddress)&&(sup->wValueLow==0x01)){ //clear DEVICE_REMOTE_WAKEUP
                             wakeupHostEnabeled=0;
                             //Status Stage
@@ -341,7 +342,6 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         }
 
                     }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device feature
-                        debugg=255;
                         if(sup->wValueLow==0x01){//set Device can wakeup host
                             wakeupHostEnabeled=1;
                         }else{ //as a full speed device we do not support any other features
@@ -351,7 +351,6 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,0,0); //send zero length packet to confirm reception
 
                     }else if((sup->bRequest==0x05)&&(!(sup->bmRequestType&0x80))){                     //host wants to set the devices address
-                        debugg=255;
                         uint32_t address=sup->wValueLow+(((uint32_t)sup->wValueHigh)<<8);
                         if(deviceState==USBDeviceStateConfigured){
                             USB_set_ctrl_stall();
@@ -377,17 +376,14 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             //Data Stage:
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_DEVICE_Descriptor,USB_DEVICE_Descriptor[0]);
                         }else if(sup->wValueHigh==0x02){ //type of decriptor to return (configuration descriptor)
-                            debugg=255;
                             //Data Stage:
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_CONFIGURATION_DESCRIPTOR_ARRAY[sup->wValueLow],USB_CONFIGURATION_DESCRIPTOR_ARRAY[sup->wValueLow][0]);
                         }else if(sup->wValueHigh==0x03){ //type of decriptor to return (string descriptor)ion by host after Data stage
-                            debugg=255;
                             //Data Stage:
                             //TODO check if Language id matches and select accordingly            if(sup->wIndexLow==0x09&&usbSRAM[5]==0x04){
                             //Select the string descriptor based on the index (warning index is 0 indexed)
                             USB_PrepareToSendEpAfterSetup(USB_CTRL_IN,(uint8_t*)USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow],USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow][0]);
                         }else{
-                            debugg=255;
                             //error: All other descriptor types are not allowed to accessed
                             USB_set_ctrl_stall();
                         }
@@ -396,7 +392,6 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         //Device does not support creation of new descriptors or changing existing ones so:
                         USB_set_ctrl_stall();
                     }else if((sup->bRequest==0x08)&&( (sup->bmRequestType&0x80))){                     //device should return which configuration is used (bConfigurationValue)
-                        debugg=255;
                         if(deviceState==USBDeviceStateAddress){
                             uint8_t data[1]={0x00};
                             //prepare Status Stage
@@ -414,7 +409,6 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             USB_set_ctrl_stall();//error: device was not configured (undefined behavior)
                         }
                     }else if((sup->bRequest==0x09)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device to one of its configurations (bConfigurationValue)
-                        debugg=255;
                         if(deviceState==USBDeviceStateDefault){
                             USB_set_ctrl_stall();//ShouldNotHappen
                         }else{
@@ -439,7 +433,6 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         USB_set_ctrl_stall();
                     }
                 }else if((sup->bmRequestType&0x1f)==0x01){ //Standard Interface Request
-                    debugg=255;
                      /*FromHostToDevice  Request Type                DataLength
                        0                 0x00 (get status)           2
                        1                 0x01 (clear feature)        0
@@ -633,8 +626,9 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                                 EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=NULL;
                                 EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=0;
                             }
-                        }else{ //Host wants data but we don't have requested him to ask for any
-                            USB_set_ctrl_stall();
+                        }else{ //Host wants data, should be handled by us
+                            //USB_set_ctrl_stall();
+                            //TODO set Storage_ptr and check if empty to check
                         }
                     }else if(EP_CONFIG_ARRAY[epnum].EP_STATE==EP_OUT){                      //From host to device
                         if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //We still have to recieve data
@@ -675,7 +669,7 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
         }else if(USB_ATTR&USB_ATTR_USBRST_MASK){ //Reset from host by se0
             USB_enable_controller();
             USB_enable_phy();
-            debugr=255;
+            //debugr=255;
             for(uint32_t epnum=0;epnum<(sizeof(EP_CONFIG_ARRAY)/sizeof(EP_CONFIG_ARRAY[0]));epnum++){ //TODO check if reset is sufficient
                 EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=0;
                 EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=0;

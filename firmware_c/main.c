@@ -40,7 +40,7 @@ http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 └────────────────────────────────────────────────────┘
 */
 int testval=0;
-void SystemInit(){
+void SystemInit(){  //DANGER, DON'T CREATE VARIABLES HERE, SEE WARNING BELOW !!!!
     //TODO use CONFIG0 for all of this in the future
     //Enable XTAL pins to use external clock
     GPF_MFP=0x00000003; //Xtal pins, transformed to IO-pins after reboot, so enable them before clock switching
@@ -85,19 +85,21 @@ void SystemInit(){
     GPIOC_PMD=0xF000FFF5; //pc0 out for shift_rclk, pc1 out shift_data, pc8-pc13 in matrix
     GPIOD_PMD=0xFFFFF555; //pd0-pd5 out matrix
     GPIOF_PMD=0x0000001F; //pf2 out matrix,pf3 in powerSRC?
-
-    //Configure Peripherals
-    USB_init();
-    NVIC_init(); //Should be after USB because USB needs to initialize first
-
-    //USART0_start_reset();
-    //I2C1_start_reset();
-
     //TODO configure clock for i2c
 
+    //WARNING !!!! DO NOT INITIALIZE ANY VARIABLES HERE, THEY WILL BE DELETED, EVEN GLOBALS, AND DO NOT CALL FUNCTIONS THAT TRY TO DO SO !!!!
+    // the .data sections are still going to be initialized, so any global variable will get deleted, see here:
+    //https://github.com/ARM-software/CMSIS_5/issues/405
 }
 
 int main(void){
+    //Configure peripherals
+    USB_init();
+    NVIC_init(); //Should be after USB because USB needs to initialize first
+    //USART0_start_reset();
+    //I2C1_start_reset();
+
+
     while(1){
         if(debugb){
             debugb--;
@@ -119,10 +121,5 @@ int main(void){
         getPressedKeys(keys);
         USB_clear_se0();
     }
-
     //For send keys we need to send modifier as keys if no other key is pressed, so our pc can register them without any other keys
-
-}
-void WDT_IRQHandler(){
-    debugr=255;
 }

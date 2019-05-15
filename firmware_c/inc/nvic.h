@@ -30,7 +30,7 @@ typedef enum IRQn{
     PWRWU_IRQn          = 28,
     RTC_IRQn            = 31
 } IRQn_Type;
-
+#define __NVIC_PRIO_BITS 2
 #include "core_cm0.h" //After typedef IRQn_Type
 
 
