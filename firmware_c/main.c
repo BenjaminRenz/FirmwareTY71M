@@ -99,7 +99,7 @@ int main(void){
     //USART0_start_reset();
     //I2C1_start_reset();
 
-
+    USB_clear_se0(); //Start USB communication by clearing bus reset
     while(1){
         if(debugb){
             debugb--;
@@ -119,7 +119,6 @@ int main(void){
         }
         setRGB(keys);
         getPressedKeys(keys);
-        USB_clear_se0();
     }
     //For send keys we need to send modifier as keys if no other key is pressed, so our pc can register them without any other keys
 }

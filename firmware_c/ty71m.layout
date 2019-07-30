@@ -2,34 +2,39 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Compile and Upload on Debug" />
-	<File name="inc\nvic.h" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="19" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="883" topLine="24" />
-		</Cursor>
-	</File>
 	<File name="inc\usb.h" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="12" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="13504" topLine="327" />
-		</Cursor>
-	</File>
-	<File name="main.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="16" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4581" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="inc\backlight.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="15" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2431" topLine="38" />
-		</Cursor>
-	</File>
-	<File name="gcc_arm.ld" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="15" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3681" topLine="108" />
+			<Cursor1 position="14363" topLine="342" />
 		</Cursor>
 	</File>
 	<File name="inc\custom.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="7" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4940" topLine="83" />
+			<Cursor1 position="4940" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="main.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="16" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5394" topLine="89" />
+		</Cursor>
+	</File>
+	<File name="inc\hid_descriptor.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="12" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1471" topLine="9" />
+		</Cursor>
+	</File>
+	<File name="startup_NUC122.S" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="10" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4420" topLine="147" />
+		</Cursor>
+	</File>
+	<File name="inc\nvic.h" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="19" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1428" topLine="15" />
+		</Cursor>
+	</File>
+	<File name="inc\backlight.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="15" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1938" topLine="63" />
 		</Cursor>
 	</File>
 	<File name="inc\i2c.h" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="8" zoom_2="0">
@@ -37,17 +42,7 @@
 			<Cursor1 position="767" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\timer.h" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="13" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="812" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="startup_NUC122.S" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="10" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4438" topLine="162" />
-		</Cursor>
-	</File>
-	<File name="inc\keymatrix.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="7" zoom_2="0">
+	<File name="inc\keymatrix.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="7" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="996" topLine="0" />
 		</Cursor>
@@ -57,14 +52,19 @@
 			<Cursor1 position="313" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\usb_descriptors.h" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="11" zoom_2="0">
+	<File name="inc\usb_descriptors.h" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="11" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="416" topLine="0" />
+			<Cursor1 position="2483" topLine="24" />
 		</Cursor>
 	</File>
-	<File name="inc\hid_descriptor.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="12" zoom_2="0">
+	<File name="gcc_arm.ld" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="15" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="359" topLine="3" />
+			<Cursor1 position="3681" topLine="108" />
+		</Cursor>
+	</File>
+	<File name="inc\timer.h" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="13" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="812" topLine="0" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>

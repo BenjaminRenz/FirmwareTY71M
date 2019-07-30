@@ -20,7 +20,7 @@ const uint8_t USB_DEVICE_Descriptor[]={ //warning! first byte is least significa
     0x12,                   //bLength           , 1byte, descriptor size in bytes
     0x01,                   //bDescriptorType   , 1byte, descriptor type (=1 for device descriptor)
     //the upper two are common to all usb descriptors
-    0x20,0x00,              //bcdUSB            , 2byte, usb spec release number (USB 1.0/1.1/2.0)
+    0x00,0x02,              //bcdUSB            , 2byte, usb spec release number (USB 1.0/1.1/2.0)
     0x00,                   //bDeviceClass      , 1byte, device type or 0x00 to get info from Interface descriptors
     0x00,                   //bDeviceSubClass   , 1byte, subclass type (same as above)
     0x00,                   //bDeviceProtocol   , 1byte, protocol type (same as above)
