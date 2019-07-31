@@ -1,6 +1,12 @@
+#include "custom.h"
 #ifndef I2C_H_INCLUDED
 #define I2C_H_INCLUDED
 void I2C1_IRQHandler(void){
+
+}
+
+void I2C1_init(){
+    //clock should be already enabeled
 
 }
 void i2c_eeprom_write_byte( int deviceaddress, unsigned int eeaddress, byte data );

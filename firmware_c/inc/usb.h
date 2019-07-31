@@ -193,7 +193,7 @@ void USB_init(){
     USB_start_reset();
     USB_INTEN=0x00000000;
     USB_end_reset();
-    USB_ATTR=0x000007D0; //Seems to get ignored
+    USB_ATTR=0x000007D0; //TODO still valid? Seems to get ignored
     EP_CONFIG_ARRAY[0]=EP0_CFG;
     EP_CONFIG_ARRAY[1]=EP1_CFG;
     EP_CONFIG_ARRAY[2]=EP2_CFG;
@@ -257,7 +257,7 @@ void USB_PrepareToSendEp(uint32_t epnum, uint8_t* data, uint32_t packetLength){
     }
 }
 
-static __inline void USB_PrepareToSendEpAfterSetup(uint32_t epnum, uint8_t* data, uint32_t packetLength){
+static __inline void USB_PrepareToSendEpAfterSetup(uint32_t epnum, uint8_t* data, uint32_t packetLength){ //Todo remove argument epnum, always ctrl_in
     //first data packet after setup stage must be data1
     USB_EP_TO_DATAn(USB_CTRL_IN,1);
     if(!EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //check if endpoint is busy
@@ -307,9 +307,9 @@ enum {  USBDeviceStateDefault=1, //Mode after reset
 
 #define wLength ((((uint32_t)(sup->wLengthHigh))<<8)+sup->wLengthLow)
 #define wValue ((((uint32_t)(sup->wValueHigh))<<8)+sup->wValueLow)
-#define USB_NUM_OF_DEFINED_HID 1 //TODO change to 2?
+#define USB_NUM_OF_DEFINED_HID 1 //TODO change to 2 for keyboard and mouse functionality?
 uint32_t USB_HID_PROTOCOL[USB_NUM_OF_DEFINED_HID]={0};
-uint32_t tempFLAG=0;
+uint32_t tempFLAG=0; //TODO remove
 void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
     static uint32_t deviceState=USBDeviceStateDefault;
     if(USB_INTSTS&USB_INT_USB_MASK){ //Got some USB packets to process
@@ -367,6 +367,7 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             }else{
                                 if(deviceState==USBDeviceStateAddress){ //if it's zero and in address state switch to default state
                                     deviceState=USBDeviceStateDefault;
+                                    //TODO set address to zero in this case?
                                 }
                             }
                             //Status stage:
@@ -633,9 +634,8 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                                 EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=NULL;
                                 EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left=0;
                             }
-                        }else{ //Host wants data, should be handled by us
+                        }else{ //Host wants data, but we don't have any
                             //USB_set_ctrl_stall();
-                            //TODO set Storage_ptr and check if empty to check
                         }
                     }else if(EP_CONFIG_ARRAY[epnum].EP_STATE==EP_OUT){                      //From host to device
                         if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_left){ //We still have to recieve data

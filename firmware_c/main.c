@@ -12,6 +12,8 @@ volatile uint8_t debugb=0;
 //Note USB supports up to 8 endpoints
 #include "nvic.h"      //Interrupt controller needed for usb
 
+#include "i2c.h"
+
 #include "timer.h"
 
 //microcontroller is a NUC123LD4AN with 68kb flash and 20kb sram
@@ -97,7 +99,7 @@ int main(void){
     USB_init();
     NVIC_init(); //Should be after USB because USB needs to initialize first
     //USART0_start_reset();
-    //I2C1_start_reset();
+    I2C_init();
 
     USB_clear_se0(); //Start USB communication by clearing bus reset
     while(1){
