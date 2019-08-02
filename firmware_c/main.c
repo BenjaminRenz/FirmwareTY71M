@@ -8,11 +8,13 @@ keydata keys[8][9]={0};
 volatile uint8_t debugr=0;
 volatile uint8_t debugg=0;
 volatile uint8_t debugb=0;
+#include "uart.h"
+
 #include "usb.h"       //usb support
 //Note USB supports up to 8 endpoints
 #include "nvic.h"      //Interrupt controller needed for usb
 
-#include "i2c.h"
+
 
 #include "timer.h"
 
@@ -41,7 +43,6 @@ http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 │ 4  4  4  ---------4--------  4  4  4   4   7  7  7 │
 └────────────────────────────────────────────────────┘
 */
-int testval=0;
 void SystemInit(){  //DANGER, DON'T CREATE VARIABLES HERE, SEE WARNING BELOW !!!!
     //TODO use CONFIG0 for all of this in the future
     //Enable XTAL pins to use external clock
@@ -74,8 +75,8 @@ void SystemInit(){  //DANGER, DON'T CREATE VARIABLES HERE, SEE WARNING BELOW !!!
     //I2C1 - SCL PA11, SDA PA10
     //UART0 - RXD PC4, TXD PC5
     GPA_MFP=0x00000C00; //I2C1 SCL and SDA
-    GPB_MFP=0x00000002; //UART0 Rx and Tx
-    GPC_MFP=0x00000000;
+    GPB_MFP=0x00000000;
+    GPC_MFP=0x00000020; //UART0 Rx and Tx
     GPD_MFP=0x00000000;
     GPF_MFP=0x00000003; //Enable Xtal pins for external 4MHz Quartz
     ALT_MFP=0x60000000;
@@ -99,8 +100,8 @@ int main(void){
     USB_init();
     NVIC_init(); //Should be after USB because USB needs to initialize first
     //USART0_start_reset();
-    I2C_init();
-
+    UART0_init();
+    //I2C1_init();
     USB_clear_se0(); //Start USB communication by clearing bus reset
     while(1){
         if(debugb){

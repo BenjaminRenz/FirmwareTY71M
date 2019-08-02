@@ -7,6 +7,8 @@ void I2C1_IRQHandler(void){
 
 void I2C1_init(){
     //clock should be already enabeled
+    IPRSTC2|=0x00000200; //0x00000100 for i2c0
+
 
 }
 void i2c_eeprom_write_byte( int deviceaddress, unsigned int eeaddress, byte data );

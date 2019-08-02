@@ -13,7 +13,7 @@ http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 
 #define CLK_AHBCLK_ISP_Msk              0x00000004
 #define CLK_APBCLK_USBD_Msk             0x08000000
-#define CLK_APBCLK_I2Cx_Msk             0x00000100
+#define CLK_APBCLK_I2C1_Msk             0x00000200
 #define CLK_APBCLK_UART0_Msk            0x00010000
 
 #define CLK_CLKSEL1_WDT_S_HCLK_DIV2048  0x00000002
@@ -110,10 +110,10 @@ static __inline void I2C1_end_reset(){
     IPRSTC2&=~(1<<9);
 }
 
-static __inline void USART0_start_reset(){
+static __inline void UART0_start_reset(){
     IPRSTC2|=(1<<16);
 }
-static __inline void USART0_end_reset(){
+static __inline void UART0_end_reset(){
     IPRSTC2&=~(1<<16);
 }
 

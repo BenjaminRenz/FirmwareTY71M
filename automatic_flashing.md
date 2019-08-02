@@ -1,5 +1,5 @@
-0) Requiered Hardware
--StLink Programmer or other programmer supported by openocd
+0) Required Hardware
+-StLink Programmer or other programmer supported by Openocd
 -Windows PC, if you are planning to use the existing setup
 -ty71 keyboard (disconnect lithium battery for safety)
 
@@ -12,7 +12,7 @@
   see pictures for reference "keyboard cables.jpg" and "stlink cables.jpg"
     
     
-2) Connect the micro USB to the keyboard for power
+2) Connect the keyboard with a micro USB to your pc to power it.
 
 3) Install:
     StLinkDriver: https://www.st.com/content/st_com/en/products/development-tools/software-development-tools/stm32-software-development-tools/stm32-programmers/stsw-link004.html (bottom of page, you need to be registered)
