@@ -34,6 +34,19 @@ const uint8_t USB_DEVICE_Descriptor[]={ //warning! first byte is least significa
     USB_DD_NUM_CONFGR       //bNumConfigurations, 1byte, number of configuration Descriptors (e.g. for one bus powered and one self powered device 0x02)
 };
 
+const uint8_t USB_DEVICE_QUALIFIER_Descriptor[]={ //warning! first byte is least significant (important for fields with >1 bytes)
+    0x0a,                   //bLength           , 1byte, descriptor size in bytes
+    0x06,                   //bDescriptorType   , 1byte, descriptor type (=6 for device qualifier descriptor)
+    //the upper two are common to all usb descriptors
+    0x00,0x02,              //bcdUSB            , 2byte, usb spec release number (USB 1.0/1.1/2.0)
+    0x00,                   //bDeviceClass      , 1byte, device type or 0x00 to get info from Interface descriptors
+    0x00,                   //bDeviceSubClass   , 1byte, subclass type (same as above)
+    0x00,                   //bDeviceProtocol   , 1byte, protocol type (same as above)
+    USB_DD_EP0_packet_size, //bMaxPacketSize    , 1byte, max Packet size for endpoint0
+    USB_DD_NUM_CONFGR,      //bNumConfigurations, 1byte, number of configuration Descriptors (e.g. for one bus powered and one self powered device 0x02)
+    0x00                    //reserved =0
+};
+
 //CONGIFURATION DESCRIPTORS
 const uint8_t USB_CONFIG_Descriptor1[]={
     0x09,                   //bLength           , 1byte, descriptor size in bytes
@@ -142,7 +155,5 @@ const uint8_t* USB_STRING_DESCRIPTOR_ARRAY[]={ //TODO check if uint32_t* is work
 const uint8_t* USB_CONFIGURATION_DESCRIPTOR_ARRAY[USB_DD_NUM_CONFGR]={
     USB_CONFIG_Descriptor1
 };
-
-
 
 #endif // UDB_DESCRIPTORS_H_INCLUDED

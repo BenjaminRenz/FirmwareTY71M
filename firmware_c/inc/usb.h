@@ -28,7 +28,8 @@ https://wiki.osdev.org/Universal_Serial_Bus                     //Info on data t
     -after reset, startup and when endpoint resumes from halt we need to set it to data0
     -when reconfiguring a bulk ep, reset to data0 TODO
     -The status stage after a setup packet happens with a data1 packet, for either CTRL_IN or CTRL_OUT
-    -Asumtion: NUC automatically sets data0 for CTRL_OUT when recieving a setup packet
+    -When there is a CTRL_IN transfer after the setup packet, data1 will be the first packet
+    -Assumption: NUC does not automatically sets data0 for CTRL_OUT when receiving a setup packet
 */
 
 enum{EP_IN=0b10, EP_OUT=0b01, EP_DISABELED=0b00};   //EP_STATE
@@ -439,7 +440,10 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             //TODO check if Language id matches and select accordingly            if(sup->wIndexLow==0x09&&usbSRAM[5]==0x04){
                             //Select the string descriptor based on the index (warning index is 0 indexed)
                             USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow],minOf(USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow][0],wLength));
-                        }else{
+                        }else if(sup->wValueHigh==0x06){ //device qualifier descriptor
+                            USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_DEVICE_QUALIFIER_Descriptor,minOf(USB_DEVICE_QUALIFIER_Descriptor[0],wLength));
+                        }
+                        else{
                             //error: All other descriptor types are not allowed to accessed
                             USB_set_ctrl_stall();
                         }
