@@ -51,7 +51,7 @@ const uint8_t USB_DEVICE_QUALIFIER_Descriptor[]={ //warning! first byte is least
 const uint8_t USB_CONFIG_Descriptor1[]={
     0x09,                   //bLength           , 1byte, descriptor size in bytes
     0x02,                   //bDescriptorType   , 1byte, descriptor type (=2 for configuration descriptor)
-    0x29,0x00,              //wTotalLength      , 2byte, length of itself+interface descriptors+endpoints underneath in hirachy (2*0x07+3*0x09)
+    0x3b,0x00,              //wTotalLength      , 2byte, length of itself+interface descriptors+endpoints underneath in hirachy (2*0x07+5*0x09)=0x003b
     USB_CD_NUM_IFACES,      //bNumInterfaces    , 1byte,
     0x01,                   //bConfigurationValue, 1byte,   ??value with which this config descriptor is referenced when having multiple
     0x04,                   //iConfiguration    , 1byte, index of string describing this configuration
@@ -76,11 +76,11 @@ const uint8_t USB_CONFIG_Descriptor1[]={
     0x00,                   //bCountryCode      , 1byte, (not specific)
     0x01,                   //bNumDescriptors   , 1byte, (one report descriptor will follow)
     0x22,                   //bDescriptorType   , 1byte, report desciptor
-    sizeof(REPORT_Descriptor_Keyboard)&&0xff,(sizeof(REPORT_Descriptor_Keyboard)&&0xff00)>>8,//bDescriptorLength , 2byte, length of following report descriptor
+    sizeof(REPORT_Descriptor_Keyboard)&0xff,(sizeof(REPORT_Descriptor_Keyboard)&0xff00)>>8,//bDescriptorLength , 2byte, length of following report descriptor
     //Interface 1, Endpoint 1
     0x07,                   //bLength           , 1byte, descriptor size in bytes
-    0x05,                   //bDescriptorType   , 1byte, descriptor type (=0x05 for interface)
-    0x01,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
+    0x05,                   //bDescriptorType   , 1byte, descriptor type (=0x05 for endpoint)
+    0x81,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
     0x03,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
     USB_SRAM_ENDP_SIZE&0x00FF,(USB_SRAM_ENDP_SIZE&0xff00)>>8,//wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
     USB_EPD_pollingtime,    //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
@@ -95,12 +95,21 @@ const uint8_t USB_CONFIG_Descriptor1[]={
     0x01,                   //bInterfaceSubClass, 1byte, sub class code of interface (eg. HID: 0x00 for none and 0x01 for boot interface)
     0x02,                   //bInterfaceProtocol, 1byte, protocol code (e.g.: 0x00 none, 0x01 keyboard, 0x02 Mouse)
     0x06,                   //iInterface        , 1byte, index of string for Descriptor (can be 0x00 to indicate that there is none)
+    //Interface 2, HID Descriptor
+    0x09,                   //bLength           , 1byte, descriptor size in bytes
+    0x21,                   //bDescriptorType   , 1byte, descriptor type (=0x21 for hid descriptor)
+    //the upper two are common to all usb descriptors
+    0x01,0x01,              //bcdHID            , 2byte, hid spec release number (USB 1.0/1.1/2.0)
+    0x00,                   //bCountryCode      , 1byte, (not specific)
+    0x01,                   //bNumDescriptors   , 1byte, (one report descriptor will follow)
+    0x22,                   //bDescriptorType   , 1byte, report desciptor
+    sizeof(REPORT_Descriptor_Mouse)&0xff,(sizeof(REPORT_Descriptor_Mouse)&0xff00)>>8,//bDescriptorLength , 2byte, length of following report descriptor
     //Interface 2, Endpoint 2
     0x07,                   //bLength           , 1byte, descriptor size in bytes
-    0x05,                   //bDescriptorType   , 1byte, descriptor type (=0x05 for interface)
-    0x02,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
+    0x05,                   //bDescriptorType   , 1byte, descriptor type (=0x05 for endpoint)
+    0x82,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
     0x03,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
-    USB_SRAM_ENDP_SIZE&0x00FF,(USB_SRAM_ENDP_SIZE&0xff00)>>8,//wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
+    USB_SRAM_ENDP_SIZE&0x00ff,(USB_SRAM_ENDP_SIZE&0xff00)>>8,//wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
     USB_EPD_pollingtime     //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
 };
 

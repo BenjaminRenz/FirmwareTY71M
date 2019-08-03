@@ -97,3 +97,16 @@ void print32HEX(uint32_t ToHex){
     UART0_send_async(hexstring,13,0);//TODO potentialy buggy, if called to frequently
 }
 
+void print8shortHEX(uint8_t ToHex){
+    uint8_t hexstring[3];
+    hexstring[0]='x';
+    for(uint8_t i=0;i<2;i++){
+        uint8_t isolatedBlock=((ToHex&(0xf0>>(4*i)))>>((4-4*i)));
+        if(isolatedBlock<10){
+            hexstring[1+i]=0x30+isolatedBlock;
+        }else{
+            hexstring[1+i]=0x57+isolatedBlock;
+        }
+    }
+    UART0_send_async(hexstring,3,0);//TODO potentialy buggy, if called to frequently
+}
