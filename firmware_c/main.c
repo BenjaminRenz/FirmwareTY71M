@@ -15,7 +15,6 @@ volatile uint8_t debugb=0;
 #include "nvic.h"      //Interrupt controller needed for usb
 
 
-
 #include "timer.h"
 
 //microcontroller is a NUC123LD4AN with 68kb flash and 20kb sram
@@ -24,25 +23,6 @@ volatile uint8_t debugb=0;
 http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 */
 
-/*Column Layout
-┌────────────────────────────────────────────────────┐
-│ 0  1  2  3  4  5  6  7  0  1  2  3  4   5  6  7  4 │
-│ 0   1  2  3  4  5  6  7  0  1  2  3  4  5  6  7  5 │
-│  0   1  2  3  4  5  6  7  0  1  2  3   4           │
-│ 0  7  1  2  3  4  5  6  3  0  1  2    3       6    │
-│ 0  1  2  ---------3--------  4  5  6   7   5  6  7 │
-└────────────────────────────────────────────────────┘
-*/
-
-/*Row Layout
-┌────────────────────────────────────────────────────┐
-│ 0  0  0  0  0  0  0  0  5  5  5  5  5   5  5  5  8 │
-│ 1   1  1  1  1  1  1  1  6  6  6  6  6  6  6  6  8 │
-│  2   2  2  2  2  2  2  2  7  7  7  7   7           │
-│ 3  8  3  3  3  3  3  3  3  8  8  8    8       8    │
-│ 4  4  4  ---------4--------  4  4  4   4   7  7  7 │
-└────────────────────────────────────────────────────┘
-*/
 void SystemInit(){  //DANGER, DON'T CREATE VARIABLES HERE, SEE WARNING BELOW !!!!
     //TODO use CONFIG0 for all of this in the future
     //Enable XTAL pins to use external clock

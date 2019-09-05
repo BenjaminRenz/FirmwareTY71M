@@ -15,18 +15,19 @@
 #define KEY_H               0x0B
 #define KEY_I               0x0C
 #define KEY_J               0x0D
-#define KEY_K               0x0F
-#define KEY_L               0x10
-#define KEY_M               0x11
-#define KEY_N               0x12
-#define KEY_O               0x13
-#define KEY_P               0x14
-#define KEY_Q               0x15
-#define KEY_R               0x16
-#define KEY_S               0x17
-#define KEY_T               0x18
-#define KEY_U               0x19
-#define KEY_V               0x1a
+#define KEY_K               0x0E
+#define KEY_L               0x0F
+#define KEY_M               0x10
+#define KEY_N               0x11
+#define KEY_O               0x12
+#define KEY_P               0x13
+#define KEY_Q               0x14
+#define KEY_R               0x15
+#define KEY_S               0x16
+#define KEY_T               0x17
+#define KEY_U               0x18
+#define KEY_V               0x19
+#define KEY_W               0x1a
 #define KEY_X               0x1b
 #define KEY_Y               0x1c
 #define KEY_Z               0x1d
@@ -107,17 +108,7 @@
 #define KEY_BACKSLASHNONUS  0x64 //and |
 #define KEY_APPLICATION     0x65
 #define KEY_POWER           0x66
-#define KEY_KEYPAD1         0x67
-#define KEY_KEYPAD1         0x68
-#define KEY_KEYPAD1         0x69
-#define KEY_KEYPAD1         0x6A
-#define KEY_KEYPAD1         0x6B
-#define KEY_KEYPAD1         0x6C
-#define KEY_KEYPAD1         0x6D
-#define KEY_KEYPAD1         0x6E
-#define KEY_KEYPAD1         0x6F
-#define KEY_KEYPAD1         0x70
-#define KEY_KEYPAD1
+#define KEY_KEYPADEQUAL     0x67
 
 #define KEY_MOD_LEFTCTRL    0x01
 #define KEY_MOD_LEFTSHIFT   0x02
@@ -137,20 +128,19 @@
 #define KEY_RIGHTALT        0xe6
 #define KEY_RIGHTOS         0xe7
 //Those are not supported by unix or bios
-/*
+
 #define KEY_F13             0x68
-#define KEY_F14             0x68
-#define KEY_F15             0x68
-#define KEY_F16             0x68
-#define KEY_F17             0x68
-#define KEY_F18             0x68
-#define KEY_F19             0x68
-#define KEY_F20             0x68
-#define KEY_F21             0x68
-#define KEY_F22             0x68
-#define KEY_F23             0x68
-#define KEY_F24             0x68
-*/
+#define KEY_F14             0x69
+#define KEY_F15             0x6A
+#define KEY_F16             0x6B
+#define KEY_F17             0x6C
+#define KEY_F18             0x6D
+#define KEY_F19             0x6E
+#define KEY_F20             0x6F
+#define KEY_F21             0x70
+#define KEY_F22             0x71
+#define KEY_F23             0x72
+#define KEY_F24             0x73
 
 
 #endif // KEYCODES_H_INCLUDED

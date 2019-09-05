@@ -11,6 +11,7 @@
 #include <stddef.h>    //needed for sizeof("structs")
 #include "nvic.h"      //Required to enable USB interrupts
 #include "backlight.h" //TODO remove (For testing purposes)
+#include "usb_classreq.h" //To handle all class requests like HID...
 //Sources
 /*
 https://www-user.tu-chemnitz.de/~heha/viewchm.php/hs/usb.chm/usb6.htm
@@ -157,6 +158,7 @@ static __inline void USB_set_ctrl_stall(){ //if error indicate that to the host
     debugr=255;
     USB_set_ep_stall_bit(USB_CTRL_OUT);
     USB_set_ep_stall_bit(USB_CTRL_IN);
+    UART0_send_async("0",1,0);
 }
 
 #define USB_stop_transOrRec(epnum) USB_CFGP(epnum)|=0x00000001//clear in/out ready flag after already written USB_MAXPLD
@@ -271,7 +273,7 @@ void USB_process_rx_tx(uint32_t epnum){
                 USB_MAXPLD(epnum)=USB_SRAM_ENDP_SIZE;
                 EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr+=USB_SRAM_ENDP_SIZE; //shift the storage pointer by endpoint size
                 EP_CONFIG_ARRAY[epnum].MultiStage_Bytes-=USB_SRAM_ENDP_SIZE; //log how many bytes are left
-                UART0_send_async("um",2,0);
+                //UART0_send_async("um",2,0);
             }else{  //only this transfer left
                 for(int32_t i=0;i<EP_CONFIG_ARRAY[epnum].MultiStage_Bytes;i++){
                     USB_SRAM_EP_ADDR(epnum)[i]=EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr[i];
@@ -288,13 +290,12 @@ void USB_process_rx_tx(uint32_t epnum){
                 EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=NULL;
                 EP_CONFIG_ARRAY[epnum].MultiStage_Bytes=no_bytes_left; //transfer finished
 
-                UART0_send_async("u",1,0);
+                //UART0_send_async("u",1,0);
                 //TODO free storage?
             }
         }else{
             if(changeAddressTo!=dontChangeAddress){ //must happen after status stage has finished
                 USB_FADDR&=0xffffff80;
-                UART0_send_async("a",1,0);
                 USB_FADDR|=0x000007f&changeAddressTo; //Careful overlaps with usbattr
                 changeAddressTo=dontChangeAddress;
             }
@@ -327,7 +328,9 @@ void USB_initiate_send(uint32_t epnum, uint8_t* data, uint32_t packetLength){
         EP_CONFIG_ARRAY[epnum].MultiStage_Bytes=packetLength;
         USB_process_rx_tx(epnum);
     }else{
+        debugb=255;
         debugr=255;
+        UART0_send_async("q",1,0);
     }
 }
 
@@ -338,7 +341,9 @@ void USB_initiate_send_zerobyte(){ //status stage is always data1
         EP_CONFIG_ARRAY[USB_CTRL_IN].MultiStage_Bytes=0; //zero length packet
         USB_process_rx_tx(USB_CTRL_IN);     //send zerobyte
     }else{
+        debugg=255;
         debugr=255;
+        UART0_send_async("w",1,0);
     }
 }
 
@@ -367,7 +372,7 @@ enum {  USBDeviceStateDefault=1, //Mode after reset
 #define wLength ((((uint32_t)(sup->wLengthHigh))<<8)+sup->wLengthLow)
 #define wValue ((((uint32_t)(sup->wValueHigh))<<8)+sup->wValueLow)
 #define USB_NUM_OF_DEFINED_HID 2
-uint32_t USB_HID_PROTOCOL[USB_NUM_OF_DEFINED_HID]={0};
+uint32_t USB_HID_PROTOCOL[USB_NUM_OF_DEFINED_HID]={1}; //0 for boot protocol,1 for report protocol, hid standard forces initialized value to be report protocol
 void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
     static uint32_t deviceState=USBDeviceStateDefault;
     if(USB_INTSTS&USB_INT_USB_MASK){ //Got some USB packets to process
@@ -420,6 +425,7 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             if(sup->wValueLow){ //Set new address if it's not zero
                                 deviceState=USBDeviceStateAddress;
                                 changeAddressTo=sup->wValueLow;
+                                UART0_send_async("a",1,0);
                                 USB_initiate_send_zerobyte();
                             }else{
                                 if(deviceState==USBDeviceStateAddress){ //if it's zero and in address state switch to default state
@@ -434,20 +440,25 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         //Status Stage (prepare beforehand) which confirms reception
                         USB_initiate_recieve_zerobyte(); //Get ready to get "zero byte" confirmation by host after Data stage
                         if(sup->wValueHigh==0x01){//type of decriptor to return (device descriptor)
+                            //UART0_send_async("2",1,0);
                             //Data Stage:
                             USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_DEVICE_Descriptor,minOf(USB_DEVICE_Descriptor[0],wLength));
                             //remove? USB_EP_TO_DATAn(USB_CTRL_IN,1);
                             //USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_DEVICE_Descriptor,wLength);
                         }else if(sup->wValueHigh==0x02){ //type of decriptor to return (configuration descriptor)
                             //Data Stage:
+                            //UART0_send_async("3",1,0);
+                            //FIX? this is returned quiet often possibly wrong TODO
                             uint32_t ConfigDescriptorTotalLength=(USB_CONFIGURATION_DESCRIPTOR_ARRAY[sup->wValueLow][3]<<8)+USB_CONFIGURATION_DESCRIPTOR_ARRAY[sup->wValueLow][2];
                             USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_CONFIGURATION_DESCRIPTOR_ARRAY[sup->wValueLow],minOf(ConfigDescriptorTotalLength,wLength));
                         }else if(sup->wValueHigh==0x03){ //type of decriptor to return (string descriptor)ion by host after Data stage
                             //Data Stage:
                             //TODO check if Language id matches and select accordingly            if(sup->wIndexLow==0x09&&usbSRAM[5]==0x04){
                             //Select the string descriptor based on the index (warning index is 0 indexed)
+                            //UART0_send_async("4",1,0);
                             USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow],minOf(USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow][0],wLength));
                         }else if(sup->wValueHigh==0x06){ //device qualifier descriptor
+                            UART0_send_async("5",1,0);
                             USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_DEVICE_QUALIFIER_Descriptor,minOf(USB_DEVICE_QUALIFIER_Descriptor[0],wLength));
                         }
                         else{
@@ -456,9 +467,11 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         }
 
                     }else if((sup->bRequest==0x07)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device descriptor
+                        UART0_send_async("o",1,0);
                         //Device does not support creation of new descriptors or changing existing ones so:
                         USB_set_ctrl_stall();
                     }else if((sup->bRequest==0x08)&&( (sup->bmRequestType&0x80))){                     //device should return which configuration is used (bConfigurationValue)
+                        UART0_send_async("b",1,0);
                         if(deviceState==USBDeviceStateAddress){
                             uint8_t data[1]={0x00};
                             //prepare Status Stage
@@ -637,13 +650,19 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
             }else if((sup->bmRequestType&0x60)==0x20){ //Class request (defined by USB class in use eg. HID)
                 //Set Selector Unit Control
                 //Get Report
+
+                //UART0_send_async("?",1,0);
                 debugb=255;
                 if      ((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){ //Host wants the device to send a hid report descriptor
-                    debugr=255;
-                    UART0_send_and_wait("Not yet implemented",20);
+                    UART0_send_async("h",1,0);
+
+
+                    //UART0_send_and_wait("Not yet implemented",20);
                     //TODO not yet ready, send hid report
                     //TODO if(usbSRAM[])
-                }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){ //Get Protocol
+                }else if((sup->bRequest==0x02)&&(!(sup->bmRequestType&0x80))){ //get idle
+
+                }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){ //Get Protocol, requiered for boot devices
                     for(uint32_t i=0;i<USB_NUM_OF_DEFINED_HID;i++){
                         if(sup->wIndexLow<=USB_NUM_OF_DEFINED_HID){
                             uint8_t data[1]={USB_HID_PROTOCOL[i]};
@@ -683,8 +702,8 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                     case USB_EPSTS_SETUPACK:    //ignore setupt ack,
                         break;
                     case USB_EPSTS_INNAK:
-                        UART0_send_async("e",1,0);
-                        //break omitted on purpose
+                        UART0_send_async("e",1,0); //TODO ?
+                        break;
                     default:
                         USB_process_rx_tx(epnum);
                         break;
