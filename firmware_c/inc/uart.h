@@ -49,7 +49,7 @@ void UART0_init(){
     UART0_start_reset();
     UART0_end_reset();
     UART0_BAUD=0x2e0003e6; //div_x_en, div_x=14, brd=998 -> 9600 baud
-    UART0_LCR=0x00000003; //8n1
+    UART0_LCR =0x00000003; //8n1
     UART0_FCR&=0xfffffe0f; //set rxtreshold to 1byte, enable rx
     UART0_IER|=0x00000001; //enable interrupts for tx empty, rxdata over treshold
 }
