@@ -1,6 +1,6 @@
 #define __NO_SYSTEM_INIT
 #include "custom.h"    //NUC123LD4AN hardware register definitions
-
+#include <stdlib.h>
 #include "backlight.h" //functions for setting the rgb led backlight
 
 #include "keymatrix.h" //functions for scanning the key matrix
@@ -93,13 +93,13 @@ int main(void){
         if(debugg){
             debugg--;
         }
-        for(int row=0;row<9;row++){
+        /*for(int row=0;row<9;row++){
             for(int col=0;col<8;col++){
                 keys[col][row].blue=debugb;
                 keys[col][row].red=debugr;
                 keys[col][row].green=debugg;
             }
-        }
+        }*/
         setRGB(keys);
         getPressedKeys(keys);
     }

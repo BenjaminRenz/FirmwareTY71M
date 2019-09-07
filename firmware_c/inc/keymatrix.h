@@ -67,9 +67,11 @@ void getPressedKeys(keydata KeyDataListIN[8][9]){
             uint32_t* inputAddressPointer;
             inputAddressPointer=(uint32_t*)colINPointer[currentcol];
             if(!(*inputAddressPointer)){ //key is pressed
+                KeyDataListIN[currentcol][currentrow].state=1;
                 KeyDataListIN[currentcol][currentrow].green=255; //TODO add function here to further process keypress
             }else{ //key is released
                 KeyDataListIN[currentcol][currentrow].green=0;
+                KeyDataListIN[currentcol][currentrow].state=0;
             }
         }
         *outputAddressPointer=1;
@@ -84,7 +86,7 @@ void reportPressedKeys(uint32_t protocol,keydata KeyDataListIn[8][9],uint8_t* re
         for(uint8_t i=0;i<8;i++){
             report_out[i]=0;
         }
-        while((currentrow<9)||(keycodebyte<8)){     //break if we have finished or if we have more than 6 key rollover
+        while((currentrow<9)&&(keycodebyte<8)){     //break if we have finished or if we have more than 6 key rollover
             uint8_t keycode=KEY_NONE;
             if(KeyDataListIn[currentcol][currentrow].state){ //if key is pressed
                 keycode=keymatrix_bootmode_normal[currentcol][currentrow];
@@ -105,7 +107,7 @@ void reportPressedKeys(uint32_t protocol,keydata KeyDataListIn[8][9],uint8_t* re
                 report_out[0] &=0x40;
             }else if(keycode==KEY_MOD_RIGHTOS){
                 report_out[0] &=0x80;
-            }else if(keycode==KEY_NONE){//Normal key registered
+            }else if(keycode!=KEY_NONE){//Normal key registered
                 //TODO don't asume that a key can not be defined twice, so check previous codes and check for duplicates
                 report_out[keycodebyte++]=keycode;
             }
