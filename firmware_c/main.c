@@ -2,20 +2,21 @@
 #include "custom.h"    //NUC123LD4AN hardware register definitions
 #include <stdlib.h>
 #include "backlight.h" //functions for setting the rgb led backlight
-
 #include "keymatrix.h" //functions for scanning the key matrix
 keydata keys[8][9]={0};
+uint8_t report_hid_out[8]={0};//[8]={0};
+uint8_t previous_report_out[8]={0};
 volatile uint8_t debugr=0;
 volatile uint8_t debugg=0;
 volatile uint8_t debugb=0;
 #include "uart.h"
-
+#include "timer.h"
 #include "usb.h"       //usb support
 //Note USB supports up to 8 endpoints
 #include "nvic.h"      //Interrupt controller needed for usb
 
 
-#include "timer.h"
+
 
 //microcontroller is a NUC123LD4AN with 68kb flash and 20kb sram
 //goto pdf reference:
@@ -33,10 +34,10 @@ void SystemInit(){  //DANGER, DON'T CREATE VARIABLES HERE, SEE WARNING BELOW !!!
     //Configure clock for periphials, pll, ...
     CLK_T* ClockContrMemoryMap=(CLK_T*) CLK_BASE_POINTER;
     ClockContrMemoryMap->AHBCLK=CLK_AHBCLK_ISP_Msk;                                             //TODO check if (ISP clock) required
-    ClockContrMemoryMap->APBCLK=CLK_APBCLK_USBD_Msk|CLK_APBCLK_I2C1_Msk|CLK_APBCLK_UART0_Msk;   //Clock for usb,i2c1 and uart0 enabled
+    ClockContrMemoryMap->APBCLK=CLK_APBCLK_USBD_Msk|CLK_APBCLK_I2C1_Msk|CLK_APBCLK_TMR_all_Msk|CLK_APBCLK_UART0_Msk;   //Clock for usb,i2c1 and uart0 enabled
     ClockContrMemoryMap->CLKDIV=CLK_CLKDIV_USB(3)|CLK_CLKDIV_HCLK(2);
     ClockContrMemoryMap->PLLCON=70;                                                             //FB_DV=70, OUT_DV=0, IN_DV=0, PLL_SRC=HXT
-    ClockContrMemoryMap->CLKSEL1=CLK_CLKSEL1_WDT_S_HCLK_DIV2048|CLK_CLKSEL1_UART_S_PLL;
+    ClockContrMemoryMap->CLKSEL1=CLK_CLKSEL1_WDT_S_HCLK_DIV2048|CLK_CLKSEL1_TMR0_S_HCLK|CLK_CLKSEL1_TMR1_S_HCLK|CLK_CLKSEL1_TMR2_S_HCLK|CLK_CLKSEL1_TMR3_S_HCLK|CLK_CLKSEL1_UART_S_PLL;
     //ClockContrMemoryMap->CLKSEL2=//CLK_CLKSEL2
     //Enable external HXT
     ClockContrMemoryMap->PWRCON=CLK_PWRCON_XTL12M_EN_Msk|CLK_PWRCON_OSC22M_EN_Msk|CLK_PWRCON_PD_WU_DLY_Msk|CLK_PWRCON_PD_WU_INT_EN_Msk;
@@ -74,34 +75,23 @@ void SystemInit(){  //DANGER, DON'T CREATE VARIABLES HERE, SEE WARNING BELOW !!!
     // the .data sections are still going to be initialized, so any global variable will get deleted, see here:
     //https://github.com/ARM-software/CMSIS_5/issues/405
 }
-
+volatile uint32_t globaltest=0;
 int main(void){
+    timer1_init(71);    //increments every 1nanoesconds
+    timer1_set_compare(100);    //default to 100Hz
+    //timer1_set_compare(1000); //1000Hz refresh rate for keys
+    //timer1_start();
     //Configure peripherals
     USB_init();
     NVIC_init(); //Should be after USB because USB needs to initialize first
-    //USART0_start_reset();
     UART0_init();
     //I2C1_init();
-    USB_clear_se0(); //Start USB communication by clearing bus reset
+    timer0_init(71);        //increments every 1nanoesconds
+    timer0_set_compare(800); //RGB,keydata
+    timer0_start();
+    USB_clear_se0();        //Start USB communication by clearing bus reset
     while(1){
-        if(debugb){
-            debugb--;
-        }
-        if(debugr){
-            debugr--;
-        }
-        if(debugg){
-            debugg--;
-        }
-        /*for(int row=0;row<9;row++){
-            for(int col=0;col<8;col++){
-                keys[col][row].blue=debugb;
-                keys[col][row].red=debugr;
-                keys[col][row].green=debugg;
-            }
-        }*/
-        setRGB(keys);
-        getPressedKeys(keys);
+        globaltest++;
     }
     //For send keys we need to send modifier as keys if no other key is pressed, so our pc can register them without any other keys
 }

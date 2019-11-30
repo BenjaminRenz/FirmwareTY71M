@@ -16,7 +16,7 @@
 #ifdef __STACK_SIZE
 	.equ	Stack_Size, __STACK_SIZE
 #else
-	.equ	Stack_Size, 0x00000400
+	.equ	Stack_Size, 0x00002000 //changed from 0x00000400
 #endif
 	.global	__StackTop
 	.global	__StackLimit

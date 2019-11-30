@@ -6,6 +6,11 @@
     -do data transfers from and to storage with dma
 */
 
+
+/*Infos, important
+-when a transfer, or the last transfer when there are multiple is copied to the usb endpoint register the MultistageBytesPoints goes to -1 or "nobytesleft" (0 is needed for zerobyte)
+-if the transfer is actually completed the storage pointer is overwritten with a null pointer.
+*/
 #ifndef USB_H_INCLUDED
 #define USB_H_INCLUDED
 #include <stdint.h>    //needed for uint32_t
@@ -698,8 +703,12 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                     //TODO set timer to wait for idletime
                     //TODO if idletime is zero only reply if a key has been pressed or released (state changed)
                     //TODO fix, one can define report id's in the report descriptor which start from 1 and can be used to set individual idle times
-                    if(sup->wValueLow!=0){//set idle applies to only on interface
-                        USB_HID_IDLE_RATE[sup->wValueLow]=sup->wValueHigh;
+                    if(sup->wValueLow!=0){//set idle is report specific
+                        USB_HID_IDLE_RATE[(sup->wValueLow)-1]=sup->wValueHigh;
+                    }else{                  //applied to all reports
+                        for(int currentinterface=0;currentinterface<USB_NUM_OF_DEFINED_REPORTS;currentinterface++){
+                            USB_HID_IDLE_RATE[currentinterface]=sup->wValueHigh;
+                        }
                     }
                     UART0_send_async("p",1,0);
                     //TODO driver could start to request input from now on

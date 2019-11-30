@@ -116,7 +116,6 @@ void reportPressedKeys(uint32_t protocol,keydata KeyDataListIn[8][9],uint8_t* re
                 currentcol=0;
                 currentrow++;
             }
-
         }
     }
 }

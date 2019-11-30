@@ -29,12 +29,12 @@
 				<Option projectIncludeDirsRelation="0" />
 				<Option projectLibDirsRelation="-1" />
 				<MakeCommands>
-					<Build command="$make -f $makefile createBin" />
+					<Build command="$make -f $makefile all" />
 					<CompileFile command="$make -f $makefile $file" />
 					<Clean command="$make -f $makefile clean" />
 					<DistClean command="$make -f $makefile distclean$target" />
 					<AskRebuildNeeded command="$make -q -f $makefile $target" />
-					<SilentBuild command="$make -f $makefile createBin &gt; $(CMD_NULL)" />
+					<SilentBuild command="$make -f $makefile all &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
 			<Target title="Compile and Upload on Debug">
@@ -43,12 +43,12 @@
 				<Option type="5" />
 				<Option compiler="arm-elf-gcc" />
 				<MakeCommands>
-					<Build command="$make -f $makefile createBin" />
+					<Build command="$make -f $makefile all" />
 					<CompileFile command="$make -f $makefile $file" />
 					<Clean command="$make -f $makefile clean" />
 					<DistClean command="$make -f $makefile distclean$target" />
 					<AskRebuildNeeded command="$make -q -f $makefile $target" />
-					<SilentBuild command="$make -f $makefile createBin &gt; $(CMD_NULL)" />
+					<SilentBuild command="$make -f $makefile all &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
 		</Build>
@@ -89,11 +89,11 @@
 				<remote_debugging>
 					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds_before="reset halt" />
 				</remote_debugging>
-				<remote_debugging target="Just Compile">
-					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds="shell timeout 2&#x0A;file ./out/firmware.elf" extended_remote="1" />
-				</remote_debugging>
 				<remote_debugging target="Compile and Upload on Debug">
 					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds="shell timeout 2&#x0A;file ./out/firmware.elf&#x0A;shell timeout 2&#x0A;load" extended_remote="1" />
+				</remote_debugging>
+				<remote_debugging target="Just Compile">
+					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds="shell timeout 2&#x0A;file ./out/firmware.elf" extended_remote="1" />
 				</remote_debugging>
 			</debugger>
 			<lib_finder disable_auto="1" />

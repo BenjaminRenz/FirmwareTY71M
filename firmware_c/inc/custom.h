@@ -15,9 +15,14 @@ http://www.nuvoton.com/resource-files/TRM_NUC123_Series_EN_Rev2.04.pdf
 #define CLK_APBCLK_USBD_Msk             0x08000000
 #define CLK_APBCLK_I2C1_Msk             0x00000200
 #define CLK_APBCLK_UART0_Msk            0x00010000
+#define CLK_APBCLK_TMR_all_Msk          0x0000003c
 
 #define CLK_CLKSEL1_WDT_S_HCLK_DIV2048  0x00000002
 #define CLK_CLKSEL1_UART_S_PLL          0x01000000
+#define CLK_CLKSEL1_TMR0_S_HCLK         0x00000200
+#define CLK_CLKSEL1_TMR1_S_HCLK         0x00002000
+#define CLK_CLKSEL1_TMR2_S_HCLK         0x00020000
+#define CLK_CLKSEL1_TMR3_S_HCLK         0x00200000
 
 #define CLK_PWRCON_XTL12M_EN_Msk        0x00000001
 #define CLK_PWRCON_OSC22M_EN_Msk        0x00000004

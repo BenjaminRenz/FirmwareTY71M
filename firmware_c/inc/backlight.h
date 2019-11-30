@@ -39,44 +39,45 @@ void enable_column(uint8_t colnum_to_enable){
 }
 
 void setRGB(keydata KeyDataListIN[8][9]){
-    for(uint8_t currentcolnum=0;currentcolnum<8;currentcolnum++){
-        backlight_power_off();
-        for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop for green
-            KeyDataListIN[currentcolnum][currentrow].green_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].green;
-            //to equaly spread the on/off cycles this variable is used to store a overflowing uint8
-            if(KeyDataListIN[currentcolnum][currentrow].green_temp_brightness<KeyDataListIN[currentcolnum][currentrow].green){ //green_temp_brightness has wrapped around enable led
-                GPIOC1_DOUT=0; //Set data line on
-                shift_one_bit();
-            }else{
-                GPIOC1_DOUT=1; //Set data line off
-                shift_one_bit();
-            }
-        }
-        for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop over blue
-            KeyDataListIN[currentcolnum][currentrow].blue_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].blue;
-            if(KeyDataListIN[currentcolnum][currentrow].blue_temp_brightness<KeyDataListIN[currentcolnum][currentrow].blue){
-                GPIOC1_DOUT=0; //Set data line on
-                shift_one_bit();
-            }else{
-                GPIOC1_DOUT=1; //Set data line off
-                shift_one_bit();
-            }
-        }
-        for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop over red
-            KeyDataListIN[currentcolnum][currentrow].red_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].red;
-            if(KeyDataListIN[currentcolnum][currentrow].red_temp_brightness<KeyDataListIN[currentcolnum][currentrow].red){
-                GPIOC1_DOUT=0; //Set data line on
-                shift_one_bit();
-            }else{
-                GPIOC1_DOUT=1; //Set data line off
-                shift_one_bit();
-            }
-        }
-        enable_column(currentcolnum); //TODO time this with a timer
-        backlight_power_on();
-        delay(1<<5);
-    }
+    static uint8_t currentcolnum=0;
     backlight_power_off();
+    for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop for green
+        KeyDataListIN[currentcolnum][currentrow].green_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].green;
+        //to equaly spread the on/off cycles this variable is used to store a overflowing uint8
+        if(KeyDataListIN[currentcolnum][currentrow].green_temp_brightness<KeyDataListIN[currentcolnum][currentrow].green){ //green_temp_brightness has wrapped around enable led
+            GPIOC1_DOUT=0; //Set data line on
+            shift_one_bit();
+        }else{
+            GPIOC1_DOUT=1; //Set data line off
+            shift_one_bit();
+        }
+    }
+    for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop over blue
+        KeyDataListIN[currentcolnum][currentrow].blue_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].blue;
+        if(KeyDataListIN[currentcolnum][currentrow].blue_temp_brightness<KeyDataListIN[currentcolnum][currentrow].blue){
+            GPIOC1_DOUT=0; //Set data line on
+            shift_one_bit();
+        }else{
+            GPIOC1_DOUT=1; //Set data line off
+            shift_one_bit();
+        }
+    }
+    for(uint8_t currentrow=0;currentrow<9;currentrow++){ //Loop over red
+        KeyDataListIN[currentcolnum][currentrow].red_temp_brightness+=KeyDataListIN[currentcolnum][currentrow].red;
+        if(KeyDataListIN[currentcolnum][currentrow].red_temp_brightness<KeyDataListIN[currentcolnum][currentrow].red){
+            GPIOC1_DOUT=0; //Set data line on
+            shift_one_bit();
+        }else{
+            GPIOC1_DOUT=1; //Set data line off
+            shift_one_bit();
+        }
+    }
+    enable_column(currentcolnum); //TODO time this with a timer
+    backlight_power_on();
+    currentcolnum++;
+    if(currentcolnum>8){
+        currentcolnum=0;
+    }
 }
 
 __inline void shift_one_bit(){

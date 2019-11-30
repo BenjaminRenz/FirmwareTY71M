@@ -54,13 +54,13 @@ void UART0_init(){
     UART0_IER|=0x00000001; //enable interrupts for tx empty, rxdata over treshold
 }
 
-void UART0_send_async(uint8_t* data,uint32_t bytesToSend,uint32_t* bytesLeft){
+void UART0_send_async(char* data,uint32_t bytesToSend,uint32_t* bytesLeft){
     UART0_tx_total_to_send=bytesToSend;
     UART0_tx_bytes_left   =bytesToSend;
     if(bytesLeft){
         bytesLeft=&UART0_tx_bytes_left; //inform the user how many bytes still need to be transmitted
     }
-    UART0_tx_pointer=data;
+    UART0_tx_pointer=(uint8_t*)data;
     while(UART0_tx_bytes_left>0&&!(UART0_FSR&(1<<23))){ //first buffer fill
         UART0_THR=UART0_tx_pointer[UART0_tx_total_to_send-(UART0_tx_bytes_left--)];
     }
@@ -94,7 +94,7 @@ void print32HEX(uint32_t ToHex){
     hexstring[10]=' ';
     hexstring[10]='\n';
     hexstring[12]=0;
-    UART0_send_async(hexstring,13,0);//TODO potentialy buggy, if called to frequently
+    UART0_send_async((char*)hexstring,13,0);//TODO potentialy buggy, if called to frequently
 }
 
 void print8shortHEX(uint8_t ToHex){
@@ -108,5 +108,5 @@ void print8shortHEX(uint8_t ToHex){
             hexstring[1+i]=0x57+isolatedBlock;
         }
     }
-    UART0_send_async(hexstring,3,0);//TODO potentialy buggy, if called to frequently
+    UART0_send_async((char*)hexstring,3,0);//TODO potentialy buggy, if called to frequently
 }

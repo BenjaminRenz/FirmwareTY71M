@@ -47,6 +47,8 @@ typedef enum IRQn{
 void NVIC_init(){
     NVIC_SetPriority(USBD_IRQn,0); //set priority for USB Interrupt to highest priority 0
     NVIC_EnableIRQ(USBD_IRQn); //enable USB interrupt
+    NVIC_SetPriority(TMR0_IRQn,3);
+    NVIC_EnableIRQ(TMR0_IRQn);
     NVIC_SetPriority(UART0_IRQn,1);
     NVIC_EnableIRQ(UART0_IRQn);
 }
