@@ -4,8 +4,8 @@ MEMORY
 	RAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x5000
 }
 /* Please define your heapsize and stacksize here, must be multiple of 4 bytes*/
-_StackSize = 0x400;
-_HeapSize = 0x400;
+_StackSize = 0x1000;
+_HeapSize = 0x1000;
 
 SECTIONS{
         /* '.' is the location counter, it gets incremented by the corresponding segment size when we an a segment */
@@ -66,12 +66,13 @@ SECTIONS{
 	} >RAM
 
 	/* seems to be ineffective? */
-    _StackPlaceholderEnd=ORIGIN(RAM)+LENGTH(RAM)-_StackSize;
-	.stack_placeholder _StackPlaceholderEnd: {              /* for variables in called subroutines */
-        /* note inverted, stack extend downwards */
-		. += _StackSize;
+    . =ORIGIN(RAM)+LENGTH(RAM)-_StackSize;
+    _StackPlaceholderEnd = .;
+	.stack_placeholder : {              /* for variables in called subroutines */
+		/* note inverted, stack extend downwards */
+		. + _StackSize;
 		PROVIDE(_StackPlaceholderStart = .);
-	}>RAM
+	}
 
 
 

@@ -8,7 +8,7 @@ objpath:=.\obj
 
 cc:=arm-none-eabi-gcc.exe
 ccInclude:=-I.\inc
-ccFlags:=-g -ffreestanding -nostdlib -Wall -Wextra -T.\nuc123.ld -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -fno-exceptions -fno-unwind-tables
+ccFlags:=-c -g -ffreestanding -nostdlib -Wall -Wextra -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -fno-exceptions -fno-unwind-tables
 ccSources:=$(filter %.c,$(inputfiles))
 ccObj:= $(ccSources:.c=.o)
 

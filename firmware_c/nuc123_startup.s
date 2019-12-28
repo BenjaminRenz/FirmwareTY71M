@@ -83,7 +83,7 @@ SetBssToZero:
 	subs r1, r1, #1
 	bne SetBssToZero
 InitStack:
-	ldr r0, =_StackStart
+	ldr r0, = _StackPlaceholderStart
 	mov sp, r0
 	bl SystemInit
 	bl main
