@@ -1,22 +1,25 @@
 # Makefile for ty71m firmware on windows
-inputfiles = main.c nuc123_startup.s syscalls.c
 
+# Pittfalls: don't use spaces to indent, will result in 'missing seperator' errors
+
+inputfiles = main.c nuc123_startup.s syscalls.c
 
 objpath:=.\obj
 
 cc:=arm-none-eabi-gcc.exe
 ccInclude:=-I.\inc
-ccFlags:=-g -ffreestanding --specs=nosys.specs -Wall -Wextra -mcpu=cortex-m0 -mthumb -mfloat-abi=soft
+ccFlags:=-g -ffreestanding -nostdlib -Wall -Wextra -T.\nuc123.ld -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -fno-exceptions -fno-unwind-tables
 ccSources:=$(filter %.c,$(inputfiles))
 ccObj:= $(ccSources:.c=.o)
 
 as:=arm-none-eabi-as.exe
-asFlags:=-mcpu=cortex-m0 -mthumb -mfloat-abi=soft
+asFlags:=-mcpu=cortex-m0 -mthumb -mfloat-abi=soft -nostdlib -T.\nuc123.ld
 asSources:=$(filter %.s,$(inputfiles))
 asObj:=$(asSources:.s=.o) 
 
 ld:=arm-none-eabi-gcc.exe
-ldFlags:=-nostdlib -T.\nuc123.ld
+ldFlags:=-nostdlib -fno-exceptions -T.\nuc123.ld -fno-unwind-tables 
+#-specs=nosys.specs
 outputpath=.\out
 
 objcp  :=arm-none-eabi-objcopy.exe
@@ -50,5 +53,9 @@ $(firmwareOUT): $(elfFile)
 	
 
 clean:
+	@echo "Delete .o files"
+	del /q /s *.o
+	@echo "Delete memory.map"
+	del /q memory.map
 	@echo "Delete old bin file"
-	del /F /Q $(firmwareOUT)
+	del /f /q $(firmwareOUT)

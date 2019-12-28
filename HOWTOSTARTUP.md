@@ -1,6 +1,6 @@
 begin Warning!!!! 
 	Do NOT hit "DEBUG/CONTINUE"/"the red play button in codeblocks" if do not want to overwrite your current firmware! 
-	The project is setup in such a way that if "Compile and Upload on Debug" is selected instead of "Just Compile" it will automatically flash the firmware, when you start the debugger.
+	The project is setup in such a way, that if "Compile and Upload on Debug" is selected instead of "Just Compile" it will automatically flash the firmware, when you start the debugger.
 end   Warning!!!!
 
 begin Warning!!!! 

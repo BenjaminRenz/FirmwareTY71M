@@ -1,22 +1,23 @@
-#include <sys/stat.h>
+//#include <sys/stat.h>
+extern char _HeapPlaceholderStart; /* Defined by the linker */
+extern char _HeapPlaceholderEnd; /* Defined by the linker */
 
+char *current_heap_end = 0;
+char* _sbrk(int incr) {
 
-char *heap_end = 0;
-caddr_t _sbrk(int incr) {
-      extern char heap_low[]; /* Defined by the linker */
-      extern char heap_top[]; /* Defined by the linker */
-      char *prev_heap_end;
+      char* prev_heap_end;
 
-      if (heap_end == 0) {
-        heap_end = &heap_low;
+      if (current_heap_end == 0) {      //Initialize with value from linker
+        current_heap_end = &_HeapPlaceholderStart
+        ;
       }
-      prev_heap_end = heap_end;
+      prev_heap_end = current_heap_end;
 
-      if (heap_end + incr > &heap_top) {
+      if (current_heap_end + incr > &_HeapPlaceholderEnd) {
           /* Heap and stack collision */
-          return (caddr_t)0;
+          return (char*) -1;
       }
 
-      heap_end += incr;
-      return (caddr_t) prev_heap_end;
+      current_heap_end += incr;
+      return (char*) prev_heap_end;
 }

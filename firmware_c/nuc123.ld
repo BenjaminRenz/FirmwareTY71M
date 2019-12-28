@@ -3,73 +3,79 @@ MEMORY
 	FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x10000
 	RAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x5000
 }
-/* Please define your heapsize and stacksize here*/
-__StackSize = 0x00003000;
-__HeapSize = 0x00000800;
+/* Please define your heapsize and stacksize here, must be multiple of 4 bytes*/
+_StackSize = 0x400;
+_HeapSize = 0x400;
 
-SECTIONS
-{
-	/* '.' is the location counter, it gets incremented by the corresponding segment size when we an a segment */
-	. = ORIGIN(FLASH); 		
-	/*.vectorTable : {		 vector table that contains the interrupt function pointers 
-		KEEP(*(.vectorTable)) 	 '*' is the wildcard for any number of characters, so all files ending on .vectorTable will be copied to this section
-	} > FLASH
-	*/
-	 				/*contains the executable code*/
+SECTIONS{
+        /* '.' is the location counter, it gets incremented by the corresponding segment size when we an a segment */
+	. = ORIGIN(FLASH);
+        /* vector table that contains the interrupt and reset function pointers */
+	.vectorTable : {
+		KEEP(*(.vectorTable)) 	 /*'*' is the wildcard for any number of characters, so all files ending on .vectorTable will be copied to this section*/
+	}> FLASH
+
+        /* contains the executable code */
 	.text : {
+            /* PROVIDE, defines variable only if it has not been defined yet, that way we avoid multiple definition error when used with more than one .o file */
+        PROVIDE(_TextStart = .);
 		KEEP(*(.text))
-		KEEP(*(.eh_frame*))
-	} > FLASH
-	
-	.ARM.exidx :	/* For debugging e.g.: to unwind the stack to see which function was called by which other function*/	
-	{
-		*(.ARM.exidx* .gnu.linkonce.armexidx.*)
-	} > FLASH
-	
-	.rodata : 				/*after startup this section is copied into ram. It contains variables that need to be initialized to something else than 0*/
-	{
-		__RodataStart = .;
+		PROVIDE(_TextEnd = .);
+	}> FLASH
+
+        /* contains variables that are constant*/
+	.rodata : {
+		PROVIDE(_RodataStart = .);
 		KEEP(*(.rodata))
-		__RodataEnd = .;
+		PROVIDE(_RodataEnd = .);
+	}> FLASH
+
+        /* contains variables that are changing and initialized to a specific value (loaded from the .data section) */
+	.data : {
+        PROVIDE(_DataStart = .);
+        KEEP(*(.data))
+        PROVIDE(_DataEnd = .);
 	} > FLASH
-	
-	__RodataSize = __RodataEnd - __RodataStart;
-	
-	/*. = ORIGIN(RAM); 		 set '.' to the start of RAM*/
-	
-	.data : AT(__RodataEnd)	/*.rodata is beeing copied to this location, */
+    PROVIDE(_DataSize = SIZEOF(.data));
+
+
+	. = ORIGIN(RAM); 		/* set '.' to the start of RAM*/
+        /* all sections here are just for calculating offsets and arranging them, the resulting image does not
+           contain any ram data, therefore the 'placeholder' in the name */
+	.data_placeholder :	/* .data is being copied to this location, */
 	{
-		__dataStart = .;
-		KEEP(*(.data))
-	} > RAM
-	
-	.bss : { 				/*for all variables that are initialized to zero*/
-		__BssStart = .;
-		*(.bss)
-		__BssEnd = .;
-	} > RAM
-	
-	__bssSize = __bssEnd - __bssStart;
-	
-	_heap_low = .;
-	.heap(COPY) : { 				/*for dynamically allocated storage (malloc)*/
-		__HeapStart = .;
-		KEEP(*(.heap))
-		__HeapEnd = __HeapStart + __HeapSize;
-		. = __HeapEnd;
-	} > RAM
-	_heap_top = .;
-	__StackStart = ORIGIN(RAM) + LENGTH(RAM);		/*Because the stack starts at the end of ram Start and End are 'inverted'*/
-	__StackEnd = __StackStart - __StackSize;
-	.stack(COPY) : 				/*for data thats is beeing backuped prior to a function call or temporary variables inside a function*/
-	{
-		. = __StackEnd;
-		KEEP(*(.stack))
-		. = __StackStart;
-	} > RAM
-	
-	PROVIDE(_HeapEnd = __HeapEnd);
-	
-	ASSERT(__StackEnd >= __HeapEnd, "Linker error: Stack overflowed into heap or vice versa!")
-	
+		PROVIDE(_DataPlaceholderStart = .);
+		. += SIZEOF(.data);
+        PROVIDE(_DataPlaceholderEnd = .);
+	}>RAM
+    PROVIDE(_DataPlaceholderSize = SIZEOF(.data_placeholder));
+
+	.bss_placeholder : { 				/* for all variables that are initialized to zero */
+		PROVIDE(_BssPlaceholderStart = .);
+		KEEP(*(.bss))
+		PROVIDE(_BssPlaceholderEnd = .);
+	}>RAM
+
+	PROVIDE(_BssPlaceholderSize = SIZEOF(.bss_placeholder));
+
+	.heap_placeholder : { 				/* for dynamically allocated storage (malloc) */
+		. = ALIGN(4);
+		PROVIDE(_HeapPlaceholderStart = .);
+        . += _HeapSize;
+		PROVIDE(_HeapPlaceholderEnd = .);
+	} >RAM
+
+	/* seems to be ineffective? */
+    _StackPlaceholderEnd=ORIGIN(RAM)+LENGTH(RAM)-_StackSize;
+	.stack_placeholder _StackPlaceholderEnd: {              /* for variables in called subroutines */
+        /* note inverted, stack extend downwards */
+		. += _StackSize;
+		PROVIDE(_StackPlaceholderStart = .);
+	}>RAM
+
+
+
+
+	ASSERT(_StackPlaceholderEnd >= _HeapPlaceholderEnd, "Linker error: Stack overflowed into heap or vice versa!")
+
 }

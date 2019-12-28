@@ -1,12 +1,12 @@
 	.syntax unified
 	.arch armv6-m
-	
+
 	.cpu cortex-m0
-	
-	
-	.section .vectorTable
+	.global _start
+
+	.section .vectorTable         /* will be moved into the vector section of flash */
 	.align	2
-	.long	__StackStart          /* End of Stack */
+	.long	_StackPlaceholderStart          /* End of Stack */
 	.long	Reset_Handler         /* Reset Handler, this function is called when mcu starts */
 	.long	NMI_Handler           /* NMI Handler */
 	.long	HardFault_Handler     /* Hard Fault Handler */
@@ -57,41 +57,42 @@
     .long   RTC_IRQHandler
 
 
- 
+
 	.text
 	.thumb
 	.thumb_func
 	.align 2
-Reset_Handler: 
-	ldr r0, =__rodataStart
-	ldr r1, =__dataStart
-	ldr r2, =__rodataSize
-	cmp r2, #0;					/*if (__rodataSize == 0), then skip copy __rodata to _data*/
+Reset_Handler:
+_start:
+	ldr r0, =_DataStart
+	ldr r1, =_DataPlaceholderStart
+	ldr r2, =_DataPlaceholderSize
+	cmp r2, #0;					/*if (_DataSize == 0), then skip copy .data to .data_placeholder*/
 	beq Initialize_bss
-CopyData:
+CopyData:                       /*Data from flash needs to be copied into ram*/
 	ldrb r4, [r0,#1]			/*Load data from address of r0 an move it in r4, also increment value of r0 by one*/
 	strb r4, [r1,#1]			/*Store data from r4 in address of r1 and increment r1 by one*/
-	subs r2, r2, #1   			/*__rodataSize=__rodataSize-1*/
-	bne CopyData;	   			/*check if(__rodataSize!=0), when true continue copying*/
+	subs r2, r2, #1   			/*_rodataSize=_rodataSize-1*/
+	bne CopyData;	   			/*check if(_rodataSize!=0), when true continue copying*/
 Initialize_bss:
-	ldr r0, =__bssStart
-	ldr r1, =__bssSize
-	cmp r1, #0;					/*if(__bssSize==0), then skip zeroing out bss*/
+	ldr r0, =_BssPlaceholderStart
+	ldr r1, =_BssPlaceholderSize
+	cmp r1, #0;					/*if(_BssPlaceholderSize==0), then skip zeroing out bss*/
 SetBssToZero:
 	strb r4, [r0,#1]
 	subs r1, r1, #1
 	bne SetBssToZero
 InitStack:
-	ldr r0, =__StackStart
+	ldr r0, =_StackStart
 	mov sp, r0
 	bl SystemInit
 	bl main
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 	.align  1
     .thumb_func
     .weak   Default_Handler

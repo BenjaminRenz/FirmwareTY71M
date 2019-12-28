@@ -15,6 +15,7 @@
 2) Connect the keyboard with a micro USB to your pc to power it.
 
 3) Install:
+	Even though Windows 10 provides it's own driver I'm getting an error "LIBUSB_ERROR_NOT_SUPPORTED" with openocd. It works with the official driver from st though:
     StLinkDriver: https://www.st.com/content/st_com/en/products/development-tools/software-development-tools/stm32-software-development-tools/stm32-programmers/stsw-link004.html (bottom of page, you need to be registered)
 
 4) Start Codeblocks with the "START_codeblocks_with_gdb.bat" file, tweak the firmware to your liking, then compile it with the "gear icon".

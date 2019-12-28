@@ -1,28 +1,59 @@
 # Makefile for ty71m firmware on windows
-projectpath:=%cd%
-toolchainpath=$(projectpath)\..\gcc-arm\bin
 
-objfilepath=$(projectpath)\obj
-outputpath=$(projectpath)\out
+# Pittfalls: don't use spaces to indent, will result in 'missing seperator' errors
+
+inputfiles = main.c nuc123_startup.s syscalls.c
+
+objpath:=.\obj
 
 cc:=arm-none-eabi-gcc.exe
-objcp:=arm-none-eabi-objcopy.exe
+ccInclude:=-I.\inc
+ccFlags:=-g -ffreestanding -nostdlib -Wall -Wextra -T.\nuc123.ld -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -fno-exceptions -fno-unwind-tables
+ccSources:=$(filter %.c,$(inputfiles))
+ccObj:= $(ccSources:.c=.o)
 
-startupFile:=.\startup_NUC122.S
+as:=arm-none-eabi-as.exe
+asFlags:=-mcpu=cortex-m0 -mthumb -mfloat-abi=soft -nostdlib -T.\nuc123.ld
+asSources:=$(filter %.s,$(inputfiles))
+asObj:=$(asSources:.s=.o) 
 
-InFiles:=main.c $(startupFile)
-elfFile:=.\out\firmware.elf
-ccFlags:=-g --specs=nosys.specs -Wall -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -Wextra
-ldFlags:=-T.\gcc_arm.ld
+ld:=arm-none-eabi-gcc.exe
+ldFlags:=-nostdlib -fno-exceptions -T.\nuc123.ld -fno-unwind-tables 
+#-specs=nosys.specs
+outputpath=.\out
 
-firmwareOUT:=.\out\firmware.bin
+objcp  :=arm-none-eabi-objcopy.exe
+AllObj :=$(asObj) $(ccObj)
 
-createBin: 
-	@echo "Started compilation of firmware"
-	$(cc) -v $(InFiles) $(ldFlags) -I.\inc  -o $(elfFile) $(ccFlags)
-	@echo "Finished compilation"
-	@echo "ObjCopy"
+
+firmwareOUT:=$(outputpath)\firmware.bin
+
+elfFile:=$(outputpath)\firmware.elf
+
+
+all: $(firmwareOUT)
+
+#Make .o out of .c files, $@ is the target .o file, $< the first dependence so the coresponding .c file
+$(ccObj): %.o: %.c
+	@echo "Compiling------------------"
+	$(cc) $(ccFlags) $(ccInclude) -o $@ $<
+	
+#Make .o out of .s files, $@ is the target .o file, $< the first dependence so the coresponding .s file
+$(asObj): %.o: %.s
+	@echo "Assembling-----------------"
+	$(as) $(asInFiles) -o $@ $<
+
+$(elfFile): $(AllObj)
+	@echo "Linking--------------------"
+	$(ld) $(ldFlags) -o $@ $^ -Wl,-Map=memory.map
+
+$(firmwareOUT): $(elfFile)
+	@echo "Objcopy--------------------"
 	$(objcp) -O binary $(elfFile) $(firmwareOUT)
+	
+
 clean:
+	@echo "Delete .o files"
+	del /q /s *.o
 	@echo "Delete old bin file"
-	del /F /Q $(firmwareOUT)
+	del /f /q $(firmwareOUT)
