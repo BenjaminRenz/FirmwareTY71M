@@ -1,0 +1,19 @@
+
+line_width = 1
+n_surf = $gnuplot_n_surface$
+array surf_title[n_surf]
+$gnuplot_surface_names$
+
+set grid
+#set hidden3d
+
+splot for [col=0:n_surf-1] '$gnuplot_dat_filename$' index col matrix with lines title surf_title[col+1] lw line_width
+
+pause -1 "$gnuplot_close_msg$"
+
+reset
+
+
+
+
+

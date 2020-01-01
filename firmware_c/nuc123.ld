@@ -7,76 +7,78 @@ MEMORY
 _StackSize = 0x1000;
 _HeapSize = 0x1000;
 
+ENTRY(Reset_Handler)
+
 SECTIONS{
         /* '.' is the location counter, it gets incremented by the corresponding segment size when we an a segment */
 	. = ORIGIN(FLASH);
         /* vector table that contains the interrupt and reset function pointers */
-	.vectorTable : {
+	.vectorTab : {
+		_VecStart = .;
 		KEEP(*(.vectorTable)) 	 /*'*' is the wildcard for any number of characters, so all files ending on .vectorTable will be copied to this section*/
-	}> FLASH
+        _VecEnd = .;
+	} > FLASH
 
         /* contains the executable code */
 	.text : {
             /* PROVIDE, defines variable only if it has not been defined yet, that way we avoid multiple definition error when used with more than one .o file */
-        PROVIDE(_TextStart = .);
+        _TextStart = .;
 		KEEP(*(.text))
-		PROVIDE(_TextEnd = .);
-	}> FLASH
+		_TextEnd = .;
+	} > FLASH
 
         /* contains variables that are constant*/
+	. = ALIGN(4);
 	.rodata : {
-		PROVIDE(_RodataStart = .);
+		_RodataStart = .;
 		KEEP(*(.rodata))
-		PROVIDE(_RodataEnd = .);
-	}> FLASH
+		. = ALIGN(4);
+		_RodataEnd = .;
+	} > FLASH
 
         /* contains variables that are changing and initialized to a specific value (loaded from the .data section) */
+	. = ALIGN(4);
 	.data : {
-        PROVIDE(_DataStart = .);
+        _DataStart = .;
         KEEP(*(.data))
-        PROVIDE(_DataEnd = .);
+        . = ALIGN(4);
+        _DataEnd = .;
 	} > FLASH
-    PROVIDE(_DataSize = SIZEOF(.data));
+    _DataSize = SIZEOF(.data);
 
 
 	. = ORIGIN(RAM); 		/* set '.' to the start of RAM*/
         /* all sections here are just for calculating offsets and arranging them, the resulting image does not
            contain any ram data, therefore the 'placeholder' in the name */
+        /* stack is here so if we have an stack overflow, we get an hardwarefault and not overwrite any other sections */
+	.stack_placeholder : {              /* for variables in called subroutines */
+        _StackPlaceholderStart = .;
+		. += _StackSize;
+		_StackPlaceholderEnd = .;
+	}
 	.data_placeholder :	/* .data is being copied to this location, */
 	{
-		PROVIDE(_DataPlaceholderStart = .);
+		_DataPlaceholderStart = .;
 		. += SIZEOF(.data);
-        PROVIDE(_DataPlaceholderEnd = .);
+        _DataPlaceholderEnd = .;
 	}>RAM
-    PROVIDE(_DataPlaceholderSize = SIZEOF(.data_placeholder));
+    _DataPlaceholderSize = SIZEOF(.data_placeholder);
 
+    . = ALIGN(4);
 	.bss_placeholder : { 				/* for all variables that are initialized to zero */
-		PROVIDE(_BssPlaceholderStart = .);
+		_BssPlaceholderStart = .;
 		KEEP(*(.bss))
-		PROVIDE(_BssPlaceholderEnd = .);
+		. = ALIGN(4);
+		_BssPlaceholderEnd = .;
 	}>RAM
 
-	PROVIDE(_BssPlaceholderSize = SIZEOF(.bss_placeholder));
+	_BssPlaceholderSize = SIZEOF(.bss_placeholder);
 
 	.heap_placeholder : { 				/* for dynamically allocated storage (malloc) */
 		. = ALIGN(4);
-		PROVIDE(_HeapPlaceholderStart = .);
+		_HeapPlaceholderStart = .;
         . += _HeapSize;
-		PROVIDE(_HeapPlaceholderEnd = .);
+        . = ALIGN(4);
+		_HeapPlaceholderEnd = .;
 	} >RAM
-
-	/* seems to be ineffective? */
-    . =ORIGIN(RAM)+LENGTH(RAM)-_StackSize;
-    _StackPlaceholderEnd = .;
-	.stack_placeholder : {              /* for variables in called subroutines */
-		/* note inverted, stack extend downwards */
-		. + _StackSize;
-		PROVIDE(_StackPlaceholderStart = .);
-	}
-
-
-
-
-	ASSERT(_StackPlaceholderEnd >= _HeapPlaceholderEnd, "Linker error: Stack overflowed into heap or vice versa!")
-
 }

@@ -76,9 +76,9 @@ void SystemInit(){  //DANGER, DON'T CREATE VARIABLES HERE, SEE WARNING BELOW !!!
     //https://github.com/ARM-software/CMSIS_5/issues/405
 }
 volatile uint32_t globaltest=0;
-int main(void){
+void main(void){
     timer1_init(71);    //increments every 1nanoesconds
-    timer1_set_compare(100);    //default to 100Hz
+    timer1_set_compare(10000);    //default to 100Hz
     //timer1_set_compare(1000); //1000Hz refresh rate for keys
     //timer1_start();
     //Configure peripherals
@@ -87,10 +87,12 @@ int main(void){
     UART0_init();
     //I2C1_init();
     timer0_init(71);        //increments every 1nanoesconds
-    timer0_set_compare(800); //RGB,keydata
+    timer0_set_compare(10000); //RGB,keydata
     timer0_start();
+
     USB_clear_se0();        //Start USB communication by clearing bus reset
     while(1){
+        //debugb++;
         globaltest++;
     }
     //For send keys we need to send modifier as keys if no other key is pressed, so our pc can register them without any other keys

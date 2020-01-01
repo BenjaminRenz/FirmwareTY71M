@@ -1,0 +1,18 @@
+
+set key below box
+set autoscale
+
+line_width = 2
+n_lines = $gnuplot_n_lines$
+
+plot_line = 1
+
+if (plot_line != 0) {
+    plot for [col=2:n_lines+1] '$gnuplot_dat_filename$' using 1:col with lines title columnheader(col-1) lw line_width
+} else {
+}
+
+pause -1 "$gnuplot_close_msg$"
+
+reset
+
