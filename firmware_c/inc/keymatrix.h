@@ -2,6 +2,8 @@
 #define KEYMATRIX_H_INCLUDED
 #include "custom.h"
 #include "keyCodes.h"
+void UART0_send_async(char* data,uint32_t bytesToSend,uint32_t* bytesLeft);
+
 /*Column Layout
 ┌────────────────────────────────────────────────────┐
 │ 0  1  2  3  4  5  6  7  0  1  2  3  4   5  6  7  4 │
@@ -117,6 +119,8 @@ void reportPressedKeys(uint32_t protocol,keydata KeyDataListIn[8][9],uint8_t* re
                 currentrow++;
             }
         }
+    }else{
+        UART0_send_async("xx",2,0);
     }
 }
 

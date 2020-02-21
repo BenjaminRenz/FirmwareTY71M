@@ -4,7 +4,7 @@
 #include "backlight.h" //functions for setting the rgb led backlight
 #include "keymatrix.h" //functions for scanning the key matrix
 keydata keys[8][9]={0};
-uint8_t report_hid_out[8]={0};//[8]={0};
+uint8_t report_hid_out[8]={0};
 uint8_t previous_report_out[8]={0};
 volatile uint8_t debugr=0;
 volatile uint8_t debugg=0;
@@ -75,7 +75,7 @@ void SystemInit(){  //DANGER, DON'T CREATE VARIABLES HERE, SEE WARNING BELOW !!!
     // the .data sections are still going to be initialized, so any global variable will get deleted, see here:
     //https://github.com/ARM-software/CMSIS_5/issues/405
 }
-volatile uint32_t globaltest=0;
+uint32_t globaltest=0;
 void main(void){
     timer1_init(71);    //increments every 1nanoesconds
     timer1_set_compare(10000);    //default to 100Hz
@@ -87,7 +87,7 @@ void main(void){
     UART0_init();
     //I2C1_init();
     timer0_init(71);        //increments every 1nanoesconds
-    timer0_set_compare(10000); //RGB,keydata
+    timer0_set_compare(1000); //RGB,keydata
     timer0_start();
 
     USB_clear_se0();        //Start USB communication by clearing bus reset

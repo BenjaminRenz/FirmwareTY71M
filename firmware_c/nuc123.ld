@@ -36,43 +36,40 @@ SECTIONS{
 		_RodataEnd = .;
 	} > FLASH
 
-        /* contains variables that are changing and initialized to a specific value (loaded from the .data section) */
 	. = ALIGN(4);
-	.data : {
-        _DataStart = .;
-        KEEP(*(.data))
-        . = ALIGN(4);
-        _DataEnd = .;
-	} > FLASH
-    _DataSize = SIZEOF(.data);
+	/* data section contains variables that are changing and initialized to a specific value (loaded from the .data section) */
+	_DataOnFlashStart = .;
+	/* it is written here in the elf file, the startup file will load it to the .data section in ram, and our c script thinks that the addresses are in ram, as it should */
 
 
 	. = ORIGIN(RAM); 		/* set '.' to the start of RAM*/
-        /* all sections here are just for calculating offsets and arranging them, the resulting image does not
-           contain any ram data, therefore the 'placeholder' in the name */
+        /* all sections here are just for calculating offsets and arranging them, the resulting image will only serve as address space for the c programm 'placeholder' in the name */
         /* stack is here so if we have an stack overflow, we get an hardwarefault and not overwrite any other sections */
 	.stack_placeholder : {              /* for variables in called subroutines */
         _StackPlaceholderStart = .;
 		. += _StackSize;
+		. = ALIGN(4);
 		_StackPlaceholderEnd = .;
 	}
-	.data_placeholder :	/* .data is being copied to this location, */
-	{
+	/* .data is being copied to this location, but out programm should load its variables from this address */
+	.data : AT(_DataOnFlashStart) { /*AT() lets the linker write the content of the data section to the memory location following in brackets, to be loaded by our startup code*/
+        . = ALIGN(4);
 		_DataPlaceholderStart = .;
-		. += SIZEOF(.data);
+		KEEP(*(.data))
+        . = ALIGN(4);
         _DataPlaceholderEnd = .;
 	}>RAM
-    _DataPlaceholderSize = SIZEOF(.data_placeholder);
+    _DataPlaceholderSize = SIZEOF(.data);
 
     . = ALIGN(4);
-	.bss_placeholder : { 				/* for all variables that are initialized to zero */
+	.bss : { 				/* for all variables that are initialized to zero */
 		_BssPlaceholderStart = .;
 		KEEP(*(.bss))
 		. = ALIGN(4);
 		_BssPlaceholderEnd = .;
 	}>RAM
 
-	_BssPlaceholderSize = SIZEOF(.bss_placeholder);
+	_BssPlaceholderSize = SIZEOF(.bss);
 
 	.heap_placeholder : { 				/* for dynamically allocated storage (malloc) */
 		. = ALIGN(4);

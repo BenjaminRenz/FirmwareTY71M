@@ -49,6 +49,8 @@ void NVIC_init(){
     NVIC_EnableIRQ(USBD_IRQn); //enable USB interrupt
     NVIC_SetPriority(TMR0_IRQn,3);
     NVIC_EnableIRQ(TMR0_IRQn);
+    NVIC_SetPriority(TMR1_IRQn,2);  //TODO change? priority for key report
+    NVIC_EnableIRQ(TMR1_IRQn);
     NVIC_SetPriority(UART0_IRQn,1);
     NVIC_EnableIRQ(UART0_IRQn);
 }

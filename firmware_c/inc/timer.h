@@ -1,6 +1,8 @@
 #ifndef TIMER_H_INCLUDED
 #define TIMER_H_INCLUDED
 uint8_t USB_initiate_send(uint32_t epnum, uint8_t* data, uint32_t packetLength);
+void UART0_send_async(char* data,uint32_t bytesToSend,uint32_t* bytesLeft);
+
 #define TMR_BA01 0x40010000
 #define TMR_BA23 0x40110000
 
@@ -79,8 +81,13 @@ void TMR1_IRQHandler(){     //new data must be pushed for usb hid report
             difference_flag=1;
         }
     }
-    if(difference_flag){
-        //USB_initiate_send(2,report_hid_out,8);
+    if(difference_flag){    //TODO check if set idle is infinite (device should only reply if keys changed, or if periodic polling is active)
+        if(USB_initiate_send(3,report_hid_out,8)){
+            UART0_send_async("+",1,0);
+        }else{
+            UART0_send_async("-",1,0);
+//TODO check return to find out if busy
+        }
     }
 
 }

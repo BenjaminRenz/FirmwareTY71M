@@ -62,7 +62,7 @@
 	.align 2
 	.global Reset_Handler
 Reset_Handler:
-	ldr r0, =_DataStart
+	ldr r0, =_DataOnFlashStart
 	ldr r1, =_DataPlaceholderStart
 	ldr r2, =_DataPlaceholderSize
 	cmp r2, #0;					/*if (_DataSize == 0), then skip copy .data to .data_placeholder*/
