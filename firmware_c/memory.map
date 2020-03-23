@@ -26,7 +26,7 @@ LOAD syscalls.o
  .vectorTable   0x00000000       0xbc nuc123_startup.o
                 0x000000bc                _VecEnd = .
 
-.text           0x000000bc     0x25b4
+.text           0x000000bc     0x25c0
                 0x000000bc                _TextStart = .
  *(.text)
  .text          0x000000bc       0x48 nuc123_startup.o
@@ -54,7 +54,7 @@ LOAD syscalls.o
                 0x000000ea                GPAB_IRQHandler
                 0x000000ea                EINT0_IRQHandler
                 0x000000ea                SPI0_IRQHandler
- .text          0x00000104     0x2518 main.o
+ .text          0x00000104     0x2524 main.o
                 0x00000180                delay
                 0x000001a4                enable_column
                 0x00000208                setRGB
@@ -82,63 +82,64 @@ LOAD syscalls.o
                 0x00000d94                TMR2_IRQHandler
                 0x00000da8                TMR3_IRQHandler
                 0x00000ec4                NVIC_init
-                0x00000f06                USB_configured_setup_ep
-                0x00000f24                USB_endpoint_finished_last_send
-                0x00001094                USB_clear_se0
-                0x000010b0                USB_init
-                0x0000129c                USB_process_rx_tx
-                0x000015f0                USB_initiate_send
-                0x00001668                USB_initiate_send_zerobyte
-                0x000016f4                USB_initiate_recieve_zerobyte
-                0x0000174c                USB_initiate_recieve
-                0x000017ac                USBD_IRQHandler
-                0x000024dc                SystemInit
-                0x000025c4                main
- .text          0x0000261c       0x54 syscalls.o
-                0x0000261c                _sbrk
-                0x00002670                _TextEnd = .
+                0x00000ff0                USB_configured_setup_ep
+                0x0000103c                USB_HID_get_report
+                0x00001046                USB_endpoint_finished_last_send
+                0x000010e0                USB_clear_se0
+                0x000010fc                USB_init
+                0x000012e8                USB_process_rx_tx
+                0x000015ec                USB_initiate_send
+                0x00001660                USB_initiate_send_ctrl_zerobyte
+                0x00001698                USB_initiate_recieve
+                0x000016fc                USB_initiate_recieve_ctrl_zerobyte
+                0x00001734                USBD_IRQHandler
+                0x000024e8                SystemInit
+                0x000025d0                main
+ .text          0x00002628       0x54 syscalls.o
+                0x00002628                _sbrk
+                0x0000267c                _TextEnd = .
 
-.glue_7         0x00002670        0x0
- .glue_7        0x00002670        0x0 linker stubs
+.glue_7         0x0000267c        0x0
+ .glue_7        0x0000267c        0x0 linker stubs
 
-.glue_7t        0x00002670        0x0
- .glue_7t       0x00002670        0x0 linker stubs
+.glue_7t        0x0000267c        0x0
+ .glue_7t       0x0000267c        0x0 linker stubs
 
-.vfp11_veneer   0x00002670        0x0
- .vfp11_veneer  0x00002670        0x0 linker stubs
+.vfp11_veneer   0x0000267c        0x0
+ .vfp11_veneer  0x0000267c        0x0 linker stubs
 
-.v4_bx          0x00002670        0x0
- .v4_bx         0x00002670        0x0 linker stubs
+.v4_bx          0x0000267c        0x0
+ .v4_bx         0x0000267c        0x0 linker stubs
 
-.iplt           0x00002670        0x0
- .iplt          0x00002670        0x0 nuc123_startup.o
-                0x00002670                . = ALIGN (0x4)
+.iplt           0x0000267c        0x0
+ .iplt          0x0000267c        0x0 nuc123_startup.o
+                0x0000267c                . = ALIGN (0x4)
 
-.rodata         0x00002670      0x178
-                0x00002670                _RodataStart = .
+.rodata         0x0000267c      0x178
+                0x0000267c                _RodataStart = .
  *(.rodata)
- .rodata        0x00002670      0x176 main.o
-                0x00002670                keymatrix_bootmode_normal
-                0x000026c4                REPORT_Descriptor_Keyboard
-                0x000026ec                REPORT_Descriptor_Mouse
-                0x00002720                PHYSICAL_Descriptor
-                0x00002724                USB_DEVICE_Descriptor
-                0x00002738                USB_CONFIG_Descriptor1
-                0x00002764                USB_STRING_Descriptor_0x00
-                0x00002768                USB_STRING_Descriptor_0x01
-                0x00002774                USB_STRING_Descriptor_0x02
-                0x00002784                USB_STRING_Descriptor_0x03
-                0x0000278c                USB_STRING_Descriptor_0x04
-                0x00002794                USB_STRING_Descriptor_0x05
-                0x000027a8                USB_STRING_Descriptor_0x06
-                0x000027e8                . = ALIGN (0x4)
- *fill*         0x000027e6        0x2 
-                0x000027e8                _RodataEnd = .
+ .rodata        0x0000267c      0x176 main.o
+                0x0000267c                keymatrix_bootmode_normal
+                0x000026d4                REPORT_Descriptor_Keyboard
+                0x000026fc                REPORT_Descriptor_Mouse
+                0x00002730                PHYSICAL_Descriptor
+                0x00002734                USB_DEVICE_Descriptor
+                0x00002748                USB_CONFIG_Descriptor1
+                0x00002774                USB_STRING_Descriptor_0x00
+                0x00002778                USB_STRING_Descriptor_0x01
+                0x00002784                USB_STRING_Descriptor_0x02
+                0x00002794                USB_STRING_Descriptor_0x03
+                0x0000279c                USB_STRING_Descriptor_0x04
+                0x000027a4                USB_STRING_Descriptor_0x05
+                0x000027b8                USB_STRING_Descriptor_0x06
+                0x000027f4                . = ALIGN (0x4)
+ *fill*         0x000027f2        0x2 
+                0x000027f4                _RodataEnd = .
 
-.rel.dyn        0x000027e8        0x0
- .rel.iplt      0x000027e8        0x0 nuc123_startup.o
-                0x000027e8                . = ALIGN (0x4)
-                0x000027e8                _DataOnFlashStart = .
+.rel.dyn        0x000027f4        0x0
+ .rel.iplt      0x000027f4        0x0 nuc123_startup.o
+                0x000027f4                . = ALIGN (0x4)
+                0x000027f4                _DataOnFlashStart = .
                 0x20000000                . = ORIGIN (RAM)
 
 .stack_placeholder
@@ -149,7 +150,7 @@ LOAD syscalls.o
                 0x20001000                . = ALIGN (0x4)
                 0x20001000                _StackPlaceholderEnd = .
 
-.data           0x20001000       0xd0 load address 0x000027e8
+.data           0x20001000       0xd0 load address 0x000027f4
                 0x20001000                . = ALIGN (0x4)
                 0x20001000                _DataPlaceholderStart = .
  *(.data)
@@ -178,11 +179,11 @@ LOAD syscalls.o
                 0x200010d0                _DataPlaceholderEnd = .
                 0x000000d0                _DataPlaceholderSize = SIZEOF (.data)
 
-.igot.plt       0x200010d0        0x0 load address 0x000028b8
+.igot.plt       0x200010d0        0x0 load address 0x000028c4
  .igot.plt      0x200010d0        0x0 nuc123_startup.o
                 0x200010d0                . = ALIGN (0x4)
 
-.bss            0x200010d0      0x2ac load address 0x000028b8
+.bss            0x200010d0      0x2ac load address 0x000028c4
                 0x200010d0                _BssPlaceholderStart = .
  *(.bss)
  .bss           0x200010d0        0x0 nuc123_startup.o
@@ -215,7 +216,7 @@ LOAD syscalls.o
                 0x000002ac                _BssPlaceholderSize = SIZEOF (.bss)
 
 .heap_placeholder
-                0x2000137c     0x1000 load address 0x00002b64
+                0x2000137c     0x1000 load address 0x00002b70
                 0x2000137c                . = ALIGN (0x4)
                 0x2000137c                _HeapPlaceholderStart = .
                 0x2000237c                . = (. + _HeapSize)
@@ -238,13 +239,13 @@ OUTPUT(.\out\firmware.elf elf32-littlearm)
                                  0x76 (size before relaxing)
  .comment       0x00000075       0x76 syscalls.o
 
-.debug_info     0x00000000     0x1f77
- .debug_info    0x00000000     0x1eda main.o
- .debug_info    0x00001eda       0x9d syscalls.o
+.debug_info     0x00000000     0x1faa
+ .debug_info    0x00000000     0x1f0d main.o
+ .debug_info    0x00001f0d       0x9d syscalls.o
 
-.debug_abbrev   0x00000000      0x552
- .debug_abbrev  0x00000000      0x4b9 main.o
- .debug_abbrev  0x000004b9       0x99 syscalls.o
+.debug_abbrev   0x00000000      0x51e
+ .debug_abbrev  0x00000000      0x485 main.o
+ .debug_abbrev  0x00000485       0x99 syscalls.o
 
 .debug_aranges  0x00000000       0x40
  .debug_aranges
@@ -255,16 +256,16 @@ OUTPUT(.\out\firmware.elf elf32-littlearm)
 .debug_ranges   0x00000000       0x30
  .debug_ranges  0x00000000       0x30 main.o
 
-.debug_line     0x00000000     0x13d9
- .debug_line    0x00000000     0x1381 main.o
- .debug_line    0x00001381       0x58 syscalls.o
+.debug_line     0x00000000     0x1418
+ .debug_line    0x00000000     0x13c0 main.o
+ .debug_line    0x000013c0       0x58 syscalls.o
 
-.debug_str      0x00000000     0x1249
- .debug_str     0x00000000     0x11ea main.o
-                               0x1275 (size before relaxing)
- .debug_str     0x000011ea       0x5f syscalls.o
+.debug_str      0x00000000     0x1263
+ .debug_str     0x00000000     0x1204 main.o
+                               0x128f (size before relaxing)
+ .debug_str     0x00001204       0x5f syscalls.o
                                 0x14c (size before relaxing)
 
-.debug_frame    0x00000000      0x68c
- .debug_frame   0x00000000      0x65c main.o
- .debug_frame   0x0000065c       0x30 syscalls.o
+.debug_frame    0x00000000      0x6ac
+ .debug_frame   0x00000000      0x67c main.o
+ .debug_frame   0x0000067c       0x30 syscalls.o

@@ -31,10 +31,17 @@ https://wiki.osdev.org/Universal_Serial_Bus                     //Info on data t
 //Notes on data toggle:
 /*  -Toggle are independent for CTRL_IN and CTRL_OUT endpoint
     -the NUC toggles automatically after each reception/transmission of the endpoint, so only handle the non automatic cases...
+    -reset to data0 when:
+        -after startup of nuc (all endpoints and unplug)
+        -after set configuration
+        -after set interface
+        -after ClearFeature Halt
     -after reset, startup and when endpoint resumes from halt we need to set it to data0
-    -when reconfiguring a bulk ep, reset to data0 TODO
-    -The status stage after a setup packet happens with a data1 packet, for either CTRL_IN or CTRL_OUT
-    -When there is a CTRL_IN transfer after the setup packet, data1 will be the first packet
+    -when reconfiguring a bulk ep, reset to data0
+    -Special rules for control transfers;
+        -setup packet is data0
+        -first data packet is data1 (if we send data to host we need to change CTRL_IN to data1)
+        -status stage is data1 (we always need to set this up)
     -Assumption: NUC does not automatically sets data0 for CTRL_OUT when receiving a setup packet
 */
 
@@ -70,6 +77,7 @@ typedef struct USB_EP_CONFIG{
 
 //WARNING total sram space is 512bytes, setup space is 8bytes+USB_NUM_OF_DEFINED_ENDP*64bytes
 //-> do not enable all endpoints or decrease the USB_SRAM_ENDP_SIZE (default 64bytes)
+//WARNING EP_IN/_OUT is labeled from the perspective of the usb host (PC), so EP_IN is from keyboard to PC
 USB_EP_CONFIG EP0_CFG={
     .EP_STATE=EP_IN,
     .EP_ADDR=0,
@@ -117,7 +125,7 @@ USB_EP_CONFIG EP7_CFG={
 #define USB_SRAM_SETUP_START (*((uint32_t*)(USB_BA+0x100)))
 enum {  USBDeviceStateDefault=1, //Mode after reset
         USBDeviceStateAddress=2, //Moder after receiving address by host
-        USBDeviceStateConfigured=3, //Moder after SetConfiguration, must reset all states and Data0 as next send TODO?
+        USBDeviceStateConfigured=3, //Moder after SetConfiguration
         USBDeviceStateSuspended=4
 };
 
@@ -133,8 +141,6 @@ USB_EP_CONFIG EP_CONFIG_ARRAY[8];
 uint8_t USB_CTRL_IN=0;
 uint8_t USB_CTRL_OUT=0;
 uint8_t USB_NUM_OF_DEFINED_ENDP=0;
-#include "usb_ephandler.h"          //To handle endpoints, fill data for keyboard eg.
-#include "usb_descriptors.h"        //is here because some descriptor need to know how many endpoints we have an other details
 
 //Register and Address definitions
 #define USB_SRAM_EP_START(epnum) (*((uint32_t*)(USB_BA+0x100+USB_SRAM_SETUP_SIZE+USB_SRAM_ENDP_SIZE*epnum)))
@@ -171,12 +177,13 @@ static __inline uint32_t minOf(uint32_t arg1, uint32_t arg2){
 #define USB_set_ep_stall_bit(epnum)    (USB_CFGP(epnum)|=0x00000002)
 #define USB_clear_ep_stall_bit(epnum)  (USB_CFGP(epnum)&=0xfffffffd)
 #define USB_get_ep_stall_bit(epnum)    ((USB_CFGP(epnum)&0x00000002)>>1)
-static __inline void USB_set_CTRL_IN_stall(uint8_t debugid){ //if error indicate that to the host
-    debugr=255;
+
+static __inline void USB_set_CTRL_stall(uint8_t debugid){ //if error indicate that to the host
     if(debugid){
         UART0_send_async("!",1,0);
     }
     USB_set_ep_stall_bit(USB_CTRL_IN);
+    USB_set_ep_stall_bit(USB_CTRL_OUT);
 }
 
 #define USB_stop_transOrRec(epnum) USB_CFGP(epnum)|=0x00000001//clear in/out ready flag after already written USB_MAXPLD
@@ -186,6 +193,11 @@ static __inline void USB_set_CTRL_IN_stall(uint8_t debugid){ //if error indicate
 #define USB_end_reset() IPRSTC2&=~(1<<27)//Stop sending Reset Signal to USB block
 
 #define USB_is_attached (USB_FLDET&0x00000001)
+
+
+#include "usb_ephandler.h"          //To handle endpoints, fill data for keyboard eg.
+#include "usb_descriptors.h"        //is here because some descriptor need to know how many endpoints we have an other details
+
 
 
 /*Interrupt handle functions*/
@@ -268,7 +280,7 @@ void USB_init(){
             }
             EP_CFG.MultiStage_Bytes=0; //we have not received something yet
         }
-        USB_EP_TO_DATAn(epnum,0); //All control transfers start with data0 in general, so make sure this is the case after a fresh start
+        USB_EP_TO_DATAn(epnum,0); //transfers start with data0 in general, so make sure this is the case after a fresh start
     }
     /*USB_enable_phy(); //TODO find out when to do this...
     */
@@ -283,6 +295,7 @@ void USB_init(){
 
 void USB_process_rx_tx(uint32_t epnum){     //only enters this function when last transfer did complete with an ack
     if(EP_CONFIG_ARRAY[epnum].EP_STATE==EP_IN){ //From device to host PC
+        //We will enter this function BEFORE we have transfered the packet which we will prepare now
         if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes!=no_bytes_left){ //bytes to send left
             if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes>=USB_SRAM_ENDP_SIZE){ //will be at least one additional transfer
                 for(uint32_t i=0;i<USB_SRAM_ENDP_SIZE;i++){
@@ -296,16 +309,7 @@ void USB_process_rx_tx(uint32_t epnum){     //only enters this function when las
                 for(int32_t i=0;i<EP_CONFIG_ARRAY[epnum].MultiStage_Bytes;i++){
                     USB_SRAM_EP_ADDR(epnum)[i]=EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr[i];
                 }
-                if(epnum==USB_CTRL_IN){
-                    if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes==0){
-                        USB_EP_TO_DATAn(USB_CTRL_IN,1); //send zerobyte with data1
-                        USB_EP_TO_DATAn(USB_CTRL_OUT,0);//reset for next reception to data0 for setup
-                    }else{
-                        USB_EP_TO_DATAn(USB_CTRL_OUT,1); //receive next zerobyte with data1, therefore data0 for setup
-                    }
-                }
                 USB_MAXPLD(epnum)=EP_CONFIG_ARRAY[epnum].MultiStage_Bytes;
-
                 EP_CONFIG_ARRAY[epnum].MultiStage_Bytes=no_bytes_left; //transfer finished
 
                 //UART0_send_async("u",1,0);
@@ -320,9 +324,9 @@ void USB_process_rx_tx(uint32_t epnum){     //only enters this function when las
                 USB_FADDR|=0x000007f&changeAddressTo; //USB_FADDR overlaps overlaps with usbattr, take care
                 changeAddressTo=dontChangeAddress;
             }
-            //normal,another interrupt triggered debugr=255; //we dont have any data to send, not even a zero byte transfer, but host still has requested data -> error
         }
     }else if(EP_CONFIG_ARRAY[epnum].EP_STATE==EP_OUT){                      //From host to device
+        //We will enter this AFTER we have recieved data
         int32_t bytesInBuffer=USB_MAXPLD(epnum); //read how many bytes have been recieved
         if(bytesInBuffer<=EP_CONFIG_ARRAY[epnum].MultiStage_Bytes){ //we have not yet exeeded the maximum allowed storage space
             int32_t i=0;
@@ -344,44 +348,37 @@ void USB_process_rx_tx(uint32_t epnum){     //only enters this function when las
 
 uint8_t USB_initiate_send(uint32_t epnum, uint8_t* data, uint32_t packetLength){
     if(EP_CONFIG_ARRAY[epnum].MultiStage_Bytes==no_bytes_left){ //check if busy
-        USB_EP_TO_DATAn(epnum,1);
         EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=data;
         EP_CONFIG_ARRAY[epnum].MultiStage_Bytes=packetLength;
         USB_process_rx_tx(epnum);
         return 1;   //everything ok, message transmitted
     }else{
-        debugb=255; //busy indication
+        UART0_send_async("b1",2,0);
         return 0;   //buffer is full
     }
 }
 
-void USB_initiate_send_zerobyte(){ //status stage is always data1
-    if(EP_CONFIG_ARRAY[USB_CTRL_IN].MultiStage_Bytes==no_bytes_left){ //check if busy
-        //USB_EP_TO_DATAn(USB_CTRL_IN,1);
-        EP_CONFIG_ARRAY[USB_CTRL_IN].MultiStage_Storage_ptr=NULL;
-        EP_CONFIG_ARRAY[USB_CTRL_IN].MultiStage_Bytes=0; //zero length packet
-        USB_process_rx_tx(USB_CTRL_IN);     //send zerobyte
-    }else{
-        debugg=255;
-        debugr=255;
-        UART0_send_async("w",1,0);
-    }
-}
-
-void USB_initiate_recieve_zerobyte(){
-    //USB_EP_TO_DATAn(USB_CTRL_OUT,1); //wait for zerobyte
-    USB_MAXPLD(USB_CTRL_OUT)=0;
-    EP_CONFIG_ARRAY[USB_CTRL_OUT].MultiStage_Storage_ptr=NULL;
-    EP_CONFIG_ARRAY[USB_CTRL_OUT].MultiStage_Bytes=0; //Zerobyte needs to be revieved
+void USB_initiate_send_ctrl_zerobyte(){ //status stage is always data1
+    //We will send a zerobyte which needs to have data1
+    USB_EP_TO_DATAn(USB_CTRL_IN,1);
+    USB_initiate_send(USB_CTRL_IN,NULL,0);
+    //we need to make sure that we recieve the next data0 setup packet of the next incoming ctrl transfer
+    USB_EP_TO_DATAn(USB_CTRL_OUT,0);
 }
 
 void USB_initiate_recieve(uint32_t epnum, uint8_t* data, uint32_t MaxStorageSpace){ //is also compatible with zero length transfers
-    //TODO change this depending on MAXStorageSpace? might be neccesary
-    USB_MAXPLD(epnum)=USB_SRAM_ENDP_SIZE; //set to full size of usb buffer
-    EP_CONFIG_ARRAY[USB_CTRL_OUT].MultiStage_Storage_ptr=data;
+    USB_MAXPLD(epnum)=minOf(USB_SRAM_ENDP_SIZE,MaxStorageSpace);    //recieve only the amount of data we can handle
+    EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=data;
     EP_CONFIG_ARRAY[epnum].MultiStage_Bytes=MaxStorageSpace;
 }
 
+void USB_initiate_recieve_ctrl_zerobyte(){
+    //we are implicitly also going to send data to the host, starting with data1
+    USB_EP_TO_DATAn(USB_CTRL_IN,1);
+    //then we need to recieve a zerobyte from the host
+    USB_EP_TO_DATAn(USB_CTRL_OUT,1);
+    USB_initiate_recieve(USB_CTRL_OUT,NULL,0);
+}
 
 
 
@@ -393,6 +390,7 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
             //TODO block any further packets to be recieved with strop transaction??
             //TODO test unstall when next packet is recieved (device qualifier descriptor)
             USB_clear_ep_stall_bit(USB_CTRL_IN);
+            USB_clear_ep_stall_bit(USB_CTRL_OUT);
             //switch request type
             //print8shortHEX(sup->bRequest); TODO remove
             if((sup->bmRequestType&0x60)==0x00){                                              //Standard request (defined by USB standard)
@@ -412,7 +410,7 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         uint8_t selfPowered=((USB_CONFIG_Descriptor1[8]&0x40)>>6);
                         uint8_t data[2]={(USB_D_REMOTE_WAKEUP<<1)+selfPowered,0x00};
                         //Status Stage (prepare beforehand) which confirms reception
-                        USB_initiate_recieve_zerobyte(); //Get ready to get "zero byte" confirmation by host after Data stage
+                        USB_initiate_recieve_ctrl_zerobyte(); //Get ready to get "zero byte" confirmation by host after Data stage
                         //Data Stage:
                         USB_initiate_send(USB_CTRL_IN,data,minOf(sizeof(data),wLength));
 
@@ -420,41 +418,41 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                         if((deviceState==USBDeviceStateConfigured)&&(deviceState==USBDeviceStateAddress)&&(sup->wValueLow==0x01)){ //clear DEVICE_REMOTE_WAKEUP
                             wakeupHostEnabeled=0;
                             //Status Stage
-                            USB_initiate_send_zerobyte(); //send zero length packet to confirm
+                            USB_initiate_send_ctrl_zerobyte(); //send zero length packet to confirm
                         }else{  //unsupported for device
-                            USB_set_CTRL_IN_stall(1);
+                            USB_set_CTRL_stall(1);
                         }
 
                     }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device feature
                         if(sup->wValueLow==0x01){//set Device can wakeup host
                             wakeupHostEnabeled=1;
                             //Status Stage:
-                            USB_initiate_send_zerobyte(); //send zero length packet to confirm reception
+                            USB_initiate_send_ctrl_zerobyte(); //send zero length packet to confirm reception
                         }else{ //as a full speed device we do not support any other features
-                            USB_set_CTRL_IN_stall(2);
+                            USB_set_CTRL_stall(2);
                         }
                     }else if((sup->bRequest==0x05)&&(!(sup->bmRequestType&0x80))){                     //host wants to set the devices address
                         //TODO support test mode
                         if(deviceState==USBDeviceStateConfigured){
-                            USB_set_CTRL_IN_stall(3);
+                            USB_set_CTRL_stall(3);
                         }else{
                             if(sup->wValueLow){ //Set new address if it's not zero
                                 deviceState=USBDeviceStateAddress;
                                 changeAddressTo=sup->wValueLow;
                                 UART0_send_async("a",1,0);
-                                USB_initiate_send_zerobyte();
+                                USB_initiate_send_ctrl_zerobyte();
                             }else{
                                 if(deviceState==USBDeviceStateAddress){ //if it's zero and in address state switch to default state
                                     deviceState=USBDeviceStateDefault;
                                     changeAddressTo=0;
-                                    USB_initiate_send_zerobyte();
+                                    USB_initiate_send_ctrl_zerobyte();
                                 }
                             }
                         }
                     }else if((sup->bRequest==0x06)&&( (sup->bmRequestType&0x80))){                     //device should return a descriptor (string,configuration,device, (NOT endpoint or Interface))
                         //Request is valid in all states of deviceState
                         //Status Stage (prepare beforehand) which confirms reception
-                        USB_initiate_recieve_zerobyte(); //Get ready to get "zero byte" confirmation by host after Data stage
+                        USB_initiate_recieve_ctrl_zerobyte(); //Get ready to get "zero byte" confirmation by host after Data stage
                         if(sup->wValueHigh==0x01){//type of decriptor to return (device descriptor)
                             //UART0_send_async("2",1,0);
                             //Data Stage:
@@ -474,40 +472,39 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                             //UART0_send_async("4",1,0);
                             USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow],minOf(USB_STRING_DESCRIPTOR_ARRAY[sup->wValueLow][0],wLength));
                         }else if(sup->wValueHigh==0x06){ //device qualifier descriptor
-                            UART0_send_async("5",1,0);
                             //USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_DEVICE_QUALIFIER_Descriptor,minOf(USB_DEVICE_QUALIFIER_Descriptor[0],wLength));
+                            USB_set_CTRL_stall(42);
                             USB_set_ep_stall_bit(USB_CTRL_IN);
-                            UART0_send_async("q",1,0);
                         }else{
                             //error: All other descriptor types are not allowed to accessed
-                            USB_set_CTRL_IN_stall(5);
+                            USB_set_CTRL_stall(5);
                         }
 
                     }else if((sup->bRequest==0x07)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device descriptor
                         UART0_send_async("o",1,0);
                         //Device does not support creation of new descriptors or changing existing ones so:
-                        USB_set_CTRL_IN_stall(6);
+                        USB_set_CTRL_stall(6);
                     }else if((sup->bRequest==0x08)&&( (sup->bmRequestType&0x80))){                     //device should return which configuration is used (bConfigurationValue)
                         UART0_send_async("b",1,0);
                         if(deviceState==USBDeviceStateAddress){
                             uint8_t data[1]={0x00};
                             //prepare Status Stage
-                            USB_initiate_recieve_zerobyte(); //for following zerobyte from host
+                            USB_initiate_recieve_ctrl_zerobyte(); //for following zerobyte from host
                             //Data Stage
                             USB_initiate_send(USB_CTRL_IN,data,minOf(sizeof(data),wLength)); //Needs to return zero value if not configured
                         }else if(deviceState==USBDeviceStateConfigured){
                             uint8_t data[1]={USB_CONFIG_Descriptor1[5]};
                             //prepare Status Stage
-                            USB_initiate_recieve_zerobyte();
+                            USB_initiate_recieve_ctrl_zerobyte();
                             //Data Stage
                             USB_initiate_send(USB_CTRL_IN,data,minOf(sizeof(data),wLength)); //Needs to return configdesc value
 
                         }else{
-                            USB_set_CTRL_IN_stall(7);//error: device was not configured (undefined behavior)
+                            USB_set_CTRL_stall(7);//error: device was not configured (undefined behavior)
                         }
                     }else if((sup->bRequest==0x09)&&(!(sup->bmRequestType&0x80))){                     //host wants to set a device to one of its configurations (bConfigurationValue)
                         if(deviceState==USBDeviceStateDefault){
-                            USB_set_CTRL_IN_stall(8);//ShouldNotHappen
+                            USB_set_CTRL_stall(8);//ShouldNotHappen
                         }else{
                             if(sup->wValueLow){ //if the selected configuration is not zero
                                 if(sup->wValueLow<=USB_DD_NUM_CONFGR){ //if this configuration exists (as we numbered them from 0x01 to USB_DD_NUM_CONFGR)
@@ -516,19 +513,19 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                                     deviceState=USBDeviceStateConfigured;
                                     USB_configured_setup_ep();
                                     //Status Stage
-                                    USB_initiate_send_zerobyte();
+                                    USB_initiate_send_ctrl_zerobyte();
                                 }else{
-                                    USB_set_CTRL_IN_stall(9); //host tries to select nonexistent configuration, abort
+                                    USB_set_CTRL_stall(9); //host tries to select nonexistent configuration, abort
                                 }
                             }else{
                                 deviceState=USBDeviceStateAddress;
                                 //Status Stage
-                                USB_initiate_send_zerobyte();
+                                USB_initiate_send_ctrl_zerobyte();
                             }
                         }
 
                     }else{//Undefined standard device request
-                        USB_set_CTRL_IN_stall(10);
+                        USB_set_CTRL_stall(10);
                     }
                 }else if((sup->bmRequestType&0x1f)==0x01){ //Standard Interface Request
                      /*FromHostToDevice  Request Type                DataLength
@@ -540,43 +537,43 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                     */
                     if      ((sup->bRequest==0x00)&&( (sup->bmRequestType&0x80))){ //interface should send status to host
                         if(deviceState==USBDeviceStateAddress&&(sup->wIndexLow&0x7f)){ //if in address state and something else than endpoint zero gets selected then send request error
-                                USB_set_CTRL_IN_stall(11);
+                                USB_set_CTRL_stall(11);
                         }else{
                             uint8_t data[2]={0x00,0x00}; //Interface status is always 0x0000
                             //Status Stage (prepare beforehand) which confirms reception
-                            USB_initiate_recieve_zerobyte();
+                            USB_initiate_recieve_ctrl_zerobyte();
                             //Data Stage:
                             USB_initiate_send(USB_CTRL_IN,data,minOf(sizeof(data),wLength));
                         }
 
                     }else if((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){ //host wants to clear a interface feature
-                        USB_set_CTRL_IN_stall(12);
+                        USB_set_CTRL_stall(12);
                     }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){ //host wants to set a interface feature
-                        USB_set_CTRL_IN_stall(13);
+                        USB_set_CTRL_stall(13);
                     }else if((sup->bRequest==0x0A)&&( (sup->bmRequestType&0x80))){ //device should return alternative setting???
                         //TODO implement and switch interface based on sup->wIndexLow
                         //not yet supported, multiple configurations
-                        USB_set_CTRL_IN_stall(14);
+                        USB_set_CTRL_stall(14);
                     }else if((sup->bRequest==0x11)&&(!(sup->bmRequestType&0x80))){ //host wants to set device interface to alternative setting
                         //no alternative interface given to host in description so should not happen
                         //TODO implement and switch interface based on sup->wIndexLow
 
-                        USB_set_CTRL_IN_stall(15); //Error not supported
+                        USB_set_CTRL_stall(15); //Error not supported
 
                     }else if((sup->bRequest==0x06)&&((sup->bmRequestType&0x80))){ //host wants descriptor like hid from this interface
                         if(sup->wValueHigh==0x21){ //hid descriptor
                             //was already sent as part of configuration descriptor
                             UART0_send_async("i",1,0);
-                            USB_set_CTRL_IN_stall(4);
+                            USB_set_CTRL_stall(4);
                         }else if(sup->wValueHigh==0x22){ //report descriptor
                             UART0_send_async("n",1,0);
-                            USB_initiate_recieve_zerobyte();
+                            USB_initiate_recieve_ctrl_zerobyte();
                             USB_initiate_send(USB_CTRL_IN,(uint8_t*)USB_HID_REPORT_DESCRIPTOR_ARRAY[sup->wValueLow],minOf(sizeof(REPORT_Descriptor_Keyboard),wLength));
                         }else{
-                            USB_set_CTRL_IN_stall(30);
+                            USB_set_CTRL_stall(30);
                         }
                     }else{
-                        USB_set_CTRL_IN_stall(16); //Error not supported
+                        USB_set_CTRL_stall(16); //Error not supported
 
                     }
                 }else if((sup->bmRequestType&0x1f)==0x02){ //Standard Endpoint
@@ -588,7 +585,7 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
 
                     if      ((sup->bRequest==0x00)&&( (sup->bmRequestType&0x80))){ //endpoint should send status to host
                         if(deviceState==USBDeviceStateDefault||(deviceState==USBDeviceStateAddress&&(sup->wIndexLow&0x7f))){ //if in default state or in address and endpoint is !=zero
-                            USB_set_CTRL_IN_stall(17);
+                            USB_set_CTRL_stall(17);
                         }
                         uint8_t data[2]={0,0};
                         switch(sup->wIndexLow){
@@ -611,11 +608,11 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                                 data[0]=USB_get_ep_stall_bit(5);
                             break;
                             default:
-                                USB_set_CTRL_IN_stall(18);
+                                USB_set_CTRL_stall(18);
                             break;
                         }
                         //Status Stage (prepare beforehand) which confirms reception
-                        USB_initiate_recieve_zerobyte();
+                        USB_initiate_recieve_ctrl_zerobyte();
                         //Data Stage:
                         USB_initiate_send(USB_CTRL_IN,data,minOf(sizeof(data),wLength));
                     }else if((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){ //host wants to clear a endpoint feature
@@ -638,15 +635,15 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                                     USB_EP_TO_DATAn(5,0);
                                 break;
                                 default:
-                                    USB_set_CTRL_IN_stall(19);
+                                    USB_set_CTRL_stall(19);
                                 break;
                             }
-                            USB_initiate_send_zerobyte();
+                            USB_initiate_send_ctrl_zerobyte();
                         }else{
-                            USB_set_CTRL_IN_stall(20);
+                            USB_set_CTRL_stall(20);
                         }
                     }else if((sup->bRequest==0x03)&&(!(sup->bmRequestType&0x80))){ //host wants to set a endpoint feature
-                        if(deviceState==USBDeviceStateConfigured&&sup->wValueLow==0x00){ //ENDPOINT halt should be cleared
+                        if(deviceState==USBDeviceStateConfigured&&sup->wValueLow==0x00){ //ENDPOINT halt should be set
                             switch(sup->wIndexLow){
                                 case 0x81:////KEYBOARD IN
                                     USB_set_ep_stall_bit(2);
@@ -661,43 +658,54 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                                     USB_set_ep_stall_bit(5);
                                 break;
                                 default:
-                                    USB_set_CTRL_IN_stall(21);
+                                    USB_set_CTRL_stall(21);
                                 break;
                             }
-                            USB_initiate_send_zerobyte();
+                            USB_initiate_send_ctrl_zerobyte();
                         }else{
-                            USB_set_CTRL_IN_stall(22);
+                            USB_set_CTRL_stall(22);
                         }
                     }else{
-                        USB_set_CTRL_IN_stall(23); //Error not supported
+                        USB_set_CTRL_stall(23); //Error not supported
 
                     }
                 }else{
-                    USB_set_CTRL_IN_stall(24); //Error not supported
+                    USB_set_CTRL_stall(24); //Error not supported
 
                 }
             }else if((sup->bmRequestType&0x60)==0x20){ //Class request (defined by USB class in use eg. HID)
                 //Class specific functions (HID)
                 //reference https://www.renesas.com/eu/en/doc/products/mpumcu/apn/rl78/002/r01an0546ej0215_usb.pdf
                 //UART0_send_async("?",1,0);
-                if      ((sup->bRequest==0x01)&&(!(sup->bmRequestType&0x80))){ //set report
-                    //Not supported
-                    USB_set_CTRL_IN_stall(25);
+                if      ((sup->bRequest==0x01)&&( (sup->bmRequestType&0x80))){ //get report
+                    if(sup->wValueHigh==1){         //INPUT
+                        //TODO FIX!!!!
+                        USB_initiate_send(USB_CTRL_IN,report_hid_out,8);
+                        USB_initiate_recieve_ctrl_zerobyte();
+                        USB_HID_get_report();
+                    }else{
+                        USB_set_CTRL_stall(99);
+                    }
                 }else if((sup->bRequest==0x02)&&( (sup->bmRequestType&0x80))){ //get idle rate
-                    USB_initiate_recieve_zerobyte();
+                    USB_initiate_recieve_ctrl_zerobyte();
                     uint8_t data[1]={USB_HID_IDLE_RATE[sup->wValueLow]};
                     USB_initiate_send(USB_CTRL_IN,data,minOf(sizeof(data),wLength));
                 }else if((sup->bRequest==0x03)&&( (sup->bmRequestType&0x80))){ //Get Protocol, requiered for boot devices
-                    USB_initiate_recieve_zerobyte();    //plan to recieve zerobyte as confirmation of next transfer
+                    USB_initiate_recieve_ctrl_zerobyte();    //plan to recieve zerobyte as confirmation of next transfer
                     uint8_t data[1]={USB_HID_PROTOCOL[sup->wIndexLow]};
                     USB_initiate_send(USB_CTRL_IN,data,minOf(sizeof(data),wLength));
                 }else if((sup->bRequest==0x06)&&( (sup->bmRequestType&0x80))){ //Get HID Report descriptor
                     if(sup->wValueHigh==1){ //report type input
-                        USB_initiate_recieve_zerobyte();
+                        UART0_send_async("ir",2,0);
+                        USB_initiate_recieve_ctrl_zerobyte();
                         USB_initiate_send(USB_CTRL_IN,(uint8_t*)(USB_HID_REPORT_DESCRIPTOR_ARRAY[sup->wValueLow]),minOf(sizeof(USB_HID_REPORT_DESCRIPTOR_ARRAY[sup->wValueLow]),wLength));
                     }else if(sup->wValueHigh==3){ //report type feature
+                        UART0_send_async("e2",2,0);
                         //TODO needed
                     }
+                }else if((sup->bRequest==0x09)&&(!(sup->bmRequestType&0x80))){ //Set report
+                    //Not Supported
+                    USB_set_CTRL_stall(25);
                 }else if((sup->bRequest==0x0a)&&(!(sup->bmRequestType&0x80))){ //Set Idle
                     //TODO set timer to wait for idletime
                     //TODO if idletime is zero only reply if a key has been pressed or released (state changed)
@@ -711,16 +719,16 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
                     }
                     UART0_send_async("p",1,0);
                     //TODO driver could start to request input from now on
-                    USB_initiate_send_zerobyte();
+                    USB_initiate_send_ctrl_zerobyte();
                 }else if((sup->bRequest==0x0b)&&(!(sup->bmRequestType&0x80))){ //Set Protocol
                     USB_HID_PROTOCOL[sup->wValueLow]=sup->wValueHigh;
                     UART0_send_async("y",1,0);
-                    USB_initiate_send_zerobyte();
+                    USB_initiate_send_ctrl_zerobyte();
                 }else{
-                    USB_set_CTRL_IN_stall(27); //Should not happen
+                    USB_set_CTRL_stall(27); //Should not happen
                 }
             }else if((sup->bmRequestType&0x60)==0x40){ //Vendor Request (defined by USER/VENDOR)
-                USB_set_CTRL_IN_stall(28); //Should not happen
+                USB_set_CTRL_stall(28); //Should not happen
             }
 
             //Clear Interrupt
@@ -751,7 +759,7 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
         }else if(USB_ATTR&USB_ATTR_SUSPEND_MASK){ //Cable plugged out/host is sleeping (bus idle for <3mS)
             USB_disable_phy();
         }else if(USB_ATTR&USB_ATTR_TIMEOUT_MASK){ //Host not responding by ACK packets
-        }else if(USB_ATTR&USB_ATTR_USBRST_MASK){ //Reset from host by se0 //something is not quiet working here
+        }else if(USB_ATTR&USB_ATTR_USBRST_MASK){ //Reset from host by se0
             USB_enable_controller();
             USB_enable_phy();
             UART0_send_async("r",1,0);
@@ -763,7 +771,7 @@ void USBD_IRQHandler(void){ //will be called for all activated USB_INTEN events
             }
             USB_INTSTS=0x80ff000f;
             deviceState=USBDeviceStateDefault;
-            USB_FADDR&=0xffffff80; //careful overlaps with usbarrtib
+            USB_FADDR&=0xffffff80; //careful, overlaps with usbarrtib
         }
         //Clear BUS Interrupt
         USB_INTSTS=USB_INT_BUS_MASK;

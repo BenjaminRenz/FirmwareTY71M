@@ -82,11 +82,10 @@ void TMR1_IRQHandler(){     //new data must be pushed for usb hid report
         }
     }
     if(difference_flag){    //TODO check if set idle is infinite (device should only reply if keys changed, or if periodic polling is active)
-        if(USB_initiate_send(3,report_hid_out,8)){
-            UART0_send_async("+",1,0);
+        if(USB_initiate_send(2,report_hid_out,8)){
+            UART0_send_async("+",1,0);  //commited to buffer
         }else{
-            UART0_send_async("-",1,0);
-//TODO check return to find out if busy
+            UART0_send_async("-",1,0); //busy, not sent
         }
     }
 

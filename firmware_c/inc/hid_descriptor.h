@@ -16,19 +16,18 @@ const uint8_t REPORT_Descriptor_Keyboard[]={
     0x29, 0xe7,               //USAGE_MAXIMUM(last modifier Key - RGUI)
     0x15, 0x00,               //LOGICAL_MINIMUM(0x00)
     0x25, 0x01,               //LOGICAL_MINIMUM(0x01) (button can be pressed ore released)
-    0x95, 0x08,               //REPORT_COUNT(8)
     0x75, 0x01,               //REPORT_SIZE(1)
+    0x95, 0x08,               //REPORT_COUNT(8)
     0x81, 0x02,               //INPUT(Data,Variable,Absolute)
-
     0x95, 0x01,               //REPORT_COUNT(1)
     0x75, 0x08,               //REPORT_SIZE(1byte)
-    0x81, 0x01,               //INPUT(Constant) reserver byte
+    0x81, 0x03,               //INPUT(Constant,Variable) reserver byte
 
     0x19, 0x00,               //USAGE_MINIMUM(0)
-    0x29, 0x68,               //USAGE_MAXIMUM(104)
+    0x29, 0x65,               //USAGE_MAXIMUM(104)
     0x95, 0x06,               //REPORT_COUNT(6) //6 keys because no more are supported by bios
     0x75, 0x08,               //REPORT_SIZE(8)
-    0x81, 0x02,               //INPUT(Data,Variable,Absolute) //END PADDING
+    0x81, 0x00,               //INPUT(Data,Array,Absolute) //END PADDING
 
     0xC0                   //COLLECTION END
 };
