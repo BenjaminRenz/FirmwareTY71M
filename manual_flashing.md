@@ -1,3 +1,6 @@
+No longer needed, please use automatic flashing.
+Just here for reference.
+
 0) Requiered Hardware
 -StLink Programmer or other programmer supported by openocd
 -Windows Pc
