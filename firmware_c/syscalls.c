@@ -21,3 +21,11 @@ char* _sbrk(int incr) {
       current_heap_end += incr;
       return (char*) prev_heap_end;
 }
+
+void* memset(void* dest,int ch,unsigned int n){
+    void* destreturnp=dest;
+    while(n--){
+        *((unsigned char*)dest++)=(unsigned char)ch;
+    }
+    return destreturnp;
+}

@@ -127,8 +127,8 @@
 #define KEY_RIGHTSHIFT      0xe5
 #define KEY_RIGHTALT        0xe6
 #define KEY_RIGHTOS         0xe7
-//Those are not supported by unix or bios
 
+//Those are not supported by unix or bios
 #define KEY_F13             0x68
 #define KEY_F14             0x69
 #define KEY_F15             0x6A

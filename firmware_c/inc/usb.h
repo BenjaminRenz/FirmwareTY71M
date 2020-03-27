@@ -86,7 +86,6 @@ typedef struct USB_EP_CONFIG{
     void (*callbFuncP)(uint32_t epnum,uint8_t* data, uint32_t packetlength);
 } USB_EP_CONFIG;
 
-
 //WARNING total sram space is 512bytes, setup space is 8bytes+USB_NUM_OF_DEFINED_ENDP*64bytes
 //-> do not enable all endpoints or decrease the USB_SRAM_ENDP_SIZE (default 64bytes)
 //WARNING EP_IN/_OUT is labeled from the perspective of the usb host (PC), so EP_IN is from keyboard to PC
@@ -122,7 +121,6 @@ USB_EP_CONFIG EP6_CFG={
 USB_EP_CONFIG EP7_CFG={
     .EP_STATE=EP_DISABELED,
 };
-
 
 //BEGIN USER SETTINGS
 #define USB_SRAM_SETUP_SIZE 0x08    //can only be multiples of 0x08
@@ -335,7 +333,7 @@ void USB_process_rx_tx(uint32_t epnum){     //only enters this function when las
             //free pointer to MultiStage_Storage?
             EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr=NULL;
             if(EP_CONFIG_ARRAY[epnum].callbFuncP){
-                EP_CONFIG_ARRAY[epnum]->callbFuncP(epnum,EP_CONFIG_ARRAY[epnum].Storage_Start_ptr,EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr-EP_CONFIG_ARRAY[epnum].Storage_Start_ptr);
+                EP_CONFIG_ARRAY[epnum].callbFuncP(epnum,EP_CONFIG_ARRAY[epnum].Storage_Start_ptr,EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr-EP_CONFIG_ARRAY[epnum].Storage_Start_ptr);
                 EP_CONFIG_ARRAY[epnum].callbFuncP=NULL;     //Unset callback function
             }
             if(changeAddressTo!=dontChangeAddress){ //must happen after status stage has finished
@@ -359,7 +357,7 @@ void USB_process_rx_tx(uint32_t epnum){     //only enters this function when las
                 EP_CONFIG_ARRAY[epnum].MultiStage_Storage_ptr+=bytesInBuffer;
             }else{ //last transfer, we have finished recieving data now
                 if(EP_CONFIG_ARRAY[epnum].callbFuncP){
-                    EP_CONFIG_ARRAY[epnum].callbFuncP(epnum,EP_CONFIG_ARRAY.Storage_Start_ptr,EP_CONFIG_ARRAY.MultiStage_Bytes_leftToSend_or_recieved);
+                    EP_CONFIG_ARRAY[epnum].callbFuncP(epnum,EP_CONFIG_ARRAY[epnum].Storage_Start_ptr,EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_leftToSend_or_recieved);
                     EP_CONFIG_ARRAY[epnum].callbFuncP=NULL;     //Unset callback function
                 }
                 EP_CONFIG_ARRAY[epnum].MultiStage_Bytes_leftToSend_or_recieved=no_bytes_left; //transfer finished

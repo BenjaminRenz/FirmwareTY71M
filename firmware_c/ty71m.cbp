@@ -77,6 +77,9 @@
 		</Unit>
 		<Unit filename="nuc123.ld" />
 		<Unit filename="nuc123_startup.s" />
+		<Unit filename="syscalls.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />
@@ -84,11 +87,11 @@
 				<remote_debugging>
 					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds_before="reset halt" />
 				</remote_debugging>
-				<remote_debugging target="Just Compile">
-					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds="shell timeout 2&#x0A;file ./out/firmware.elf" extended_remote="1" />
-				</remote_debugging>
 				<remote_debugging target="Compile and Upload on Debug">
 					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds="shell timeout 2&#x0A;file ./out/firmware.elf&#x0A;shell timeout 2&#x0A;load" extended_remote="1" />
+				</remote_debugging>
+				<remote_debugging target="Just Compile">
+					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="3333" additional_cmds="shell timeout 2&#x0A;file ./out/firmware.elf" extended_remote="1" />
 				</remote_debugging>
 			</debugger>
 			<lib_finder disable_auto="1" />
