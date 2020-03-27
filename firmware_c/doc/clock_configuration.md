@@ -29,11 +29,11 @@ CLOCK INIT PROCESS:
 write all other registers, *1 to enable HXT, wait for stable clock, *2 to switch to HXT, *3 to disable HIRC
 
 This leads to register config:
-PWRCON *1:              0x00000035 //Instant powerdown with PWR_DOWN_EN, Interrupts enables, wait for stable clock, HIRC on, HXT on
-PWRCON *3:              0x00000031  //Instant powerdown with PWR_DOWN_EN, Interrupts enables, wait for stable clock, HXT on
+PWRCON *1:              0x00000035 //Instant powerdown with PWR_DOWN_EN, Interrupts enabled, wait for stable clock, HIRC on, HXT on
 AHBCLK:                 0x00000004 //ISP
 APBCLK:                 0x08010200 //USBD, UART0, I2C1
-CLKSEL0 *2:             0x00000001 //STCLK_S=HXT/1,HCLK_S=PLL/2 !*only write to after source and destination clock is stable and after
+CLKSEL0 *2:             0x00000001 //STCLK_S=HXT/1,HCLK_S=PLL/2 		!only write to after source and destination clock is stable
+PWRCON *3:              0x00000031 //Instant powerdown with PWR_DOWN_EN, Interrupts enabled, wait for stable clock, HXT on (HIRC off)
 CLKSEL1:                0x5122227A //all periphial clocks on HCLK
 CLKSEL2:                0x0002000A //all periphial clocks on HCLK
 CLKDIV:                 0x00000020 //USB/3

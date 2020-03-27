@@ -64,6 +64,7 @@
 		<Unit filename="inc/i2c.h" />
 		<Unit filename="inc/keyCodes.h" />
 		<Unit filename="inc/keymatrix.h" />
+		<Unit filename="inc/ledCodes.h" />
 		<Unit filename="inc/nvic.h" />
 		<Unit filename="inc/timer.h" />
 		<Unit filename="inc/uart.h" />
@@ -91,6 +92,16 @@
 				</remote_debugging>
 			</debugger>
 			<lib_finder disable_auto="1" />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project output_directory="doc" />
+				<doxyfile_build extract_all="1" extract_private="1" extract_static="1" />
+				<doxyfile_warnings warn_if_undocumented="1" />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
+			<fortran_project />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

@@ -83,9 +83,9 @@ const uint8_t USB_CONFIG_Descriptor1[]={
     0x81,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
     0x03,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
     USB_SRAM_ENDP_SIZE&0x00FF,(USB_SRAM_ENDP_SIZE&0xff00)>>8,//wMaxPacketSize    , 2byte, maximum Size of packets the endpoint can recieve/send
-    USB_EPD_pollingtime,    //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
+    USB_EPD_pollingtime    //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
     //Interface 1, Endpoint 1 out
-    0x07,                   //bLength           , 1byte, descriptor size in bytes
+    /*0x07,                   //bLength           , 1byte, descriptor size in bytes
     0x05,                   //bDescriptorType   , 1byte, descriptor type (=0x05 for endpoint)
     0x01,                   //bEndpointAddress  , 1byte, lower nibble (0-3) for endpoint number, bit 7 for out=0 in=1
     0x03,                   //bmAttributes      , 1byte, transfer type bit 0-1 (control=0b00,isoch=0b01,bulk=0b10,inter=0b11) (bit 2-7 only used for isoch)
@@ -93,7 +93,7 @@ const uint8_t USB_CONFIG_Descriptor1[]={
     USB_EPD_pollingtime,    //bIntercal         , 1byte, polling time for interrupt in x*1mS (for isoch must be 1)
 
 
-    /*
+
     //Interface 2
     0x09,                   //bLength           , 1byte, descriptor size in bytes
     0x04,                   //bDescriptorType   , 1byte, descriptor type (=0x04 for interface)

@@ -1,0 +1,5 @@
+C:/PortableProgramms/gitprojects/FirmwareTY71M/firmware_c/inc/i2c.h:24: warning: no matching file member found for 
+void EEEPROM::i2c_eeprom_write_byte(unsigned int eeaddress, byte data)
+Possible candidates:
+ 'void i2c_eeprom_write_byte(int deviceaddress, unsigned int eeaddress, byte data)' at line 14 of file C:/PortableProgramms/gitprojects/FirmwareTY71M/firmware_c/inc/i2c.h
+

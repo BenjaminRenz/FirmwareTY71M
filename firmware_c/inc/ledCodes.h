@@ -1,0 +1,10 @@
+#ifndef LEDCODES_H_INCLUDED
+#define LEDCODES_H_INCLUDED
+
+#define LED_NUMLOCK_MASK (1<<0)
+#define LED_CAPSLOCK_MASK (1<<1)
+#define LED_SCROLLLOCK_MASK (1<<2)
+#define LED_COMPOSE_MASK (1<<3)
+#define LED_KANA_MASK (1<<4)
+
+#endif // LEDCODES_H_INCLUDED

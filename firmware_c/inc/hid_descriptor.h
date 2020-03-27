@@ -11,6 +11,7 @@ const uint8_t REPORT_Descriptor_Keyboard[]={
     0x05, 0x01,             //USAGE_PAGE (Generic Desktop
     0x09, 0x06,             //USAGE (Keyboard)
     0xa1, 0x01,             //COLLECTION BEGIN (Application)
+
     0x05, 0x07,               //USAGE(Keyboard)
     0x19, 0xe0,               //USAGE_MINIMUM(first modifier Key - LCTRL)
     0x29, 0xe7,               //USAGE_MAXIMUM(last modifier Key - RGUI)
@@ -23,6 +24,17 @@ const uint8_t REPORT_Descriptor_Keyboard[]={
     0x75, 0x08,               //REPORT_SIZE(1byte)
     0x81, 0x03,               //INPUT(Constant,Variable) reserver byte
 
+    0x05, 0x08,               //USAGE(LED's)
+    0x19, 0x01,               //USAGE_MINIMUM(Num Lock)
+    0x29, 0x05,               //USAGE_MAXIMUM(Kana)
+    0x95, 0x05,               //REPORT_COUNT(5)
+    0x75, 0x01,               //REPORT_SIZE(1)
+    0x91, 0x02,               //OUTPUT(Data,Variable,Abs)
+    0x95, 0x01,               //REPORT_COUNT(1)
+    0x75, 0x03,               //REPORT_SIZE(3)
+    0x91, 0x03,               //OUTPUT(Constant,Variable,Abs)
+
+    0x05, 0x07,               //USAGE(Keyboard)
     0x19, 0x00,               //USAGE_MINIMUM(0)
     0x29, 0x65,               //USAGE_MAXIMUM(104)
     0x95, 0x06,               //REPORT_COUNT(6) //6 keys because no more are supported by bios
